@@ -1,0 +1,27 @@
+#!/usr/bin/env bpftrace
+/* Basic tracing for execve and execveat syscalls with ret values. */
+/* It would fail with error: ERROR: join() should not be used in an assignment or as a map key */
+
+BEGIN
+{
+  printf("%-6s %-8s %-6s %s\n", "PID", "COMM", "RET", "ARGS");
+}
+
+tracepoint:syscalls:sys_enter_execve,
+tracepoint:syscalls:sys_enter_execveat
+{ 
+  @execs[tid] = join(args->argv);
+}
+
+
+tracepoint:syscalls:sys_exit_execve,
+tracepoint:syscalls:sys_exit_execveat 
+/@execs[tid]/{ 
+  printf("%-6d %-8s %-6d %s", pid, comm, args->ret, @execs[tid]);
+  delete(@execs[tid]);
+}
+
+END
+{
+  clear(@execs);
+}

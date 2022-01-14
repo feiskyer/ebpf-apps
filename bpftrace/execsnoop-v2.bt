@@ -1,0 +1,28 @@
+#!/usr/bin/env bpftrace
+/* Basic tracing for execve and execveat syscalls with ret values. */
+/* Note that the arguments would not be shown in the outputs. */
+
+BEGIN
+{
+  printf("%-6s %-8s %-6s %s\n", "PID", "COMM", "RET", "ARGS");
+}
+
+tracepoint:syscalls:sys_enter_execve,
+tracepoint:syscalls:sys_enter_execveat
+{
+  @execs[tid] = args->argv;
+}
+
+
+tracepoint:syscalls:sys_exit_execve,
+tracepoint:syscalls:sys_exit_execveat
+/@execs[tid]/{
+  printf("%-6d %-8s %-6d", pid, comm, args->ret);
+  join(@execs[tid]);
+  delete(@execs[tid]);
+}
+
+END
+{
+  clear(@execs);
+}

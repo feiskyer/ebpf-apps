@@ -1,0 +1,26 @@
+#!/usr/bin/env bpftrace
+/* tcp drop watch by probing kfree_skb */ 
+
+// Add required kernel headers
+#include <linux/skbuff.h>
+#include <linux/ip.h>
+#include <linux/socket.h>
+#include <linux/netdevice.h>
+
+
+kprobe:kfree_skb /comm=="curl"/
+{
+  // Firt arg is sk_buff.
+  $skb = (struct sk_buff *)arg0;
+
+  // Get network header, src IP and dst IP.
+  $iph = (struct iphdr *)($skb->head + $skb->network_header);
+  $sip = ntop(AF_INET, $iph->saddr);
+  $dip = ntop(AF_INET, $iph->daddr);
+
+  // Print kernel stack only when it is TCP.
+  if ($iph->protocol == IPPROTO_TCP)
+  {
+    printf("SKB dropped: %s->%s, kstack: %s\n", $sip, $dip, kstack);
+  }
+}

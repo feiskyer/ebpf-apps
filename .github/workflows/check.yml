@@ -1,0 +1,22 @@
+name: Spell Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup
+      run: |
+        curl -L https://git.io/misspell | bash
+    - name: Spell Check
+      run: |
+        find . -type f | grep -v vmlinux.h | xargs ./bin/misspell
+
