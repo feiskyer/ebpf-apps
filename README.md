@@ -1,13 +1,6 @@
 # ebpf-apps
 
-eBPF apps based on [BCC](https://github.com/iovisor/bcc) and [libbpf](https://github.com/libbpf/libbpf).
-
-Useful links:
-
-* [ebpf.io](https://ebpf.io/)
-* [极客时间专栏]()
-* [Linux kernel BPF samples](https://elixir.bootlin.com/linux/v5.10.9/source/samples/bpf)
-* [BPF and XDP Reference Guide](https://docs.cilium.io/en/latest/bpf/)
+eBPF sample apps based on [BCC](https://github.com/iovisor/bcc), [libbpf](https://github.com/libbpf/libbpf) and lots of language bindings.
 
 ## Contents
 
@@ -20,7 +13,7 @@ Useful links:
 * [go](go): eBPF samples with Go bindings.
 * [kernel](kernel): eBPF samples built with kernel source.
 * [rust](rust): eBPF samples with Rust bindings
-* [tools](tools): Tools for eBPF, e.g. bpftool.
+* [tools](tools): Tools for eBPF (e.g. bpftool and faddr2line)
 
 ## Pre-requisites
 
@@ -77,3 +70,11 @@ sudo apt-get install -y libbpf-dev make clang llvm libelf-dev linux-tools-$(unam
 # RHEL
 sudo yum install -y libbpf-devel make clang llvm elfutils-libelf-devel bpftool
 ```
+
+## Useful Links
+
+* [eBPF.io](https://ebpf.io/)
+* [极客时间专栏]()
+* [Linux kernel BPF samples](https://elixir.bootlin.com/linux/v5.13/source/samples/bpf)
+* [BPF and XDP Reference Guide](https://docs.cilium.io/en/latest/bpf/)
+* [XDP Hands-On Tutorial](https://github.com/xdp-project/xdp-tutorial)
