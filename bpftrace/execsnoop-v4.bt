@@ -1,0 +1,12 @@
+#!/usr/bin/env bpftrace
+/* Tracing for execve and execveat syscalls with timestamp and ppid. */
+#include <linux/sched.h>
+
+BEGIN {
+  printf("%-16s %-6s %-6s %-8s\n", "TIME", "PPID", "PID", "COMM");
+}
+
+tracepoint:syscalls:sys_enter_execve,
+tracepoint:syscalls:sys_enter_execveat { 
+  printf("%-16s %-6d %-6d %-8s", strftime("%H:%M:%S:%f", nsecs), curtask->parent->pid, pid, comm); join(args->argv);
+}

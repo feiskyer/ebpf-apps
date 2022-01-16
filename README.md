@@ -5,15 +5,15 @@ eBPF sample apps based on [BCC](https://github.com/iovisor/bcc), [libbpf](https:
 ## Contents
 
 * [bcc-apps](bcc-apps): eBPF samples with BCC.
-  * [bcc-apps/c](bcc-apps/c): eBPF samples with BCC+C bindings.
-  * [bcc-apps/cpp](bcc-apps/cpp): eBPF samples with BCC+cpp bindings.
-  * [bcc-apps/python](bcc-apps/python): eBPF samples with BCC+Python bindings.
-* [bpf-apps](bpf-apps): eBPF samples with libbpf.
+  * [bcc-apps/c](bcc-apps/c): BCC samples with C binding.
+  * [bcc-apps/cpp](bcc-apps/cpp): BCC samples with C++ binding.
+  * [bcc-apps/python](bcc-apps/python): BCC samples with Python binding.
+* [bpf-apps](bpf-apps): eBPF samples with libbpf and CO-RE.
 * [bpftrace](bpftrace): eBPF samples with bpftrace.
 * [go](go): eBPF samples with Go bindings.
 * [kernel](kernel): eBPF samples built with kernel source.
-* [rust](rust): eBPF samples with Rust bindings
-* [tools](tools): Tools for eBPF (e.g. bpftool and faddr2line)
+* [rust](rust): eBPF samples with Rust bindings.
+* [tools](tools): Tools for eBPF (e.g. bpftool and faddr2line).
 
 ## Pre-requisites
 
