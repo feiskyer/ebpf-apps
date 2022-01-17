@@ -1,6 +1,6 @@
 # ebpf-apps
 
-eBPF sample apps based on [BCC](https://github.com/iovisor/bcc), [libbpf](https://github.com/libbpf/libbpf) and lots of language bindings.
+eBPF sample apps based on [BCC](https://github.com/iovisor/bcc), [libbpf](https://github.com/libbpf/libbpf) and various language bindings.
 
 ## Contents
 
@@ -73,8 +73,8 @@ sudo yum install -y libbpf-devel make clang llvm elfutils-libelf-devel bpftool
 
 ## Useful Links
 
+* [极客时间专栏《eBPF 核心技术与实战》](https://time.geekbang.org/column/intro/100104501)
 * [eBPF.io](https://ebpf.io/)
-* [极客时间专栏]()
 * [Linux kernel BPF samples](https://elixir.bootlin.com/linux/v5.13/source/samples/bpf)
 * [BPF and XDP Reference Guide](https://docs.cilium.io/en/latest/bpf/)
 * [XDP Hands-On Tutorial](https://github.com/xdp-project/xdp-tutorial)
