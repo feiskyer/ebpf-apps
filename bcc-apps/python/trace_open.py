@@ -5,7 +5,7 @@ from bcc.utils import printb
 
 
 # 1) load BPF program
-b = BPF(src_file="trace-open.c")
+b = BPF(src_file="trace_open.c")
 b.attach_kprobe(event="do_sys_openat2", fn_name="hello_world")
 
 # 2) print header
