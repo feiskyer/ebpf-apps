@@ -1,5 +1,5 @@
 #!/usr/bin/env bpftrace
-/* tcp drop watch by probing kfree_skb */ 
+/* Watch tcp drop from curl process by probing kfree_skb */ 
 
 // Add required kernel headers
 #include <linux/skbuff.h>

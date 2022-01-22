@@ -1,5 +1,7 @@
 #!/usr/bin/env bpftrace
 /* Tracing for execve and execveat syscalls with timestamp and ppid. */
+/* Require bpftrace v0.12.0 or above */
+
 #include <linux/sched.h>
 
 BEGIN {
