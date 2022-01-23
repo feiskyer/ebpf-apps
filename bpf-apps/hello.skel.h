@@ -24,8 +24,7 @@ struct hello_bpf {
 	} *rodata;
 };
 
-static void
-hello_bpf__destroy(struct hello_bpf *obj)
+static void hello_bpf__destroy(struct hello_bpf *obj)
 {
 	if (!obj)
 		return;
@@ -34,11 +33,10 @@ hello_bpf__destroy(struct hello_bpf *obj)
 	free(obj);
 }
 
-static inline int
-hello_bpf__create_skeleton(struct hello_bpf *obj);
+static inline int hello_bpf__create_skeleton(struct hello_bpf *obj);
 
-static inline struct hello_bpf *
-hello_bpf__open_opts(const struct bpf_object_open_opts *opts)
+static inline struct hello_bpf *hello_bpf__open_opts(const struct
+						     bpf_object_open_opts *opts)
 {
 	struct hello_bpf *obj;
 
@@ -51,25 +49,22 @@ hello_bpf__open_opts(const struct bpf_object_open_opts *opts)
 		goto err;
 
 	return obj;
-err:
+ err:
 	hello_bpf__destroy(obj);
 	return NULL;
 }
 
-static inline struct hello_bpf *
-hello_bpf__open(void)
+static inline struct hello_bpf *hello_bpf__open(void)
 {
 	return hello_bpf__open_opts(NULL);
 }
 
-static inline int
-hello_bpf__load(struct hello_bpf *obj)
+static inline int hello_bpf__load(struct hello_bpf *obj)
 {
 	return bpf_object__load_skeleton(obj->skeleton);
 }
 
-static inline struct hello_bpf *
-hello_bpf__open_and_load(void)
+static inline struct hello_bpf *hello_bpf__open_and_load(void)
 {
 	struct hello_bpf *obj;
 
@@ -83,20 +78,17 @@ hello_bpf__open_and_load(void)
 	return obj;
 }
 
-static inline int
-hello_bpf__attach(struct hello_bpf *obj)
+static inline int hello_bpf__attach(struct hello_bpf *obj)
 {
 	return bpf_object__attach_skeleton(obj->skeleton);
 }
 
-static inline void
-hello_bpf__detach(struct hello_bpf *obj)
+static inline void hello_bpf__detach(struct hello_bpf *obj)
 {
 	return bpf_object__detach_skeleton(obj->skeleton);
 }
 
-static inline int
-hello_bpf__create_skeleton(struct hello_bpf *obj)
+static inline int hello_bpf__create_skeleton(struct hello_bpf *obj)
 {
 	struct bpf_object_skeleton *s;
 
@@ -123,7 +115,8 @@ hello_bpf__create_skeleton(struct hello_bpf *obj)
 	/* programs */
 	s->prog_cnt = 1;
 	s->prog_skel_sz = sizeof(*s->progs);
-	s->progs = (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
+	s->progs =
+	    (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
 	if (!s->progs)
 		goto err;
 
@@ -342,9 +335,9 @@ hello_bpf__create_skeleton(struct hello_bpf *obj)
 \x08\0\0\0\0\0\0\0\x18\0\0\0\0\0\0\0";
 
 	return 0;
-err:
+ err:
 	bpf_object__destroy_skeleton(s);
 	return -1;
 }
 
-#endif /* __HELLO_BPF_SKEL_H__ */
+#endif				/* __HELLO_BPF_SKEL_H__ */

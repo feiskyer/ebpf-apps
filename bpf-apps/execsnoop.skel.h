@@ -28,8 +28,7 @@ struct execsnoop_bpf {
 	} *rodata;
 };
 
-static void
-execsnoop_bpf__destroy(struct execsnoop_bpf *obj)
+static void execsnoop_bpf__destroy(struct execsnoop_bpf *obj)
 {
 	if (!obj)
 		return;
@@ -38,11 +37,11 @@ execsnoop_bpf__destroy(struct execsnoop_bpf *obj)
 	free(obj);
 }
 
-static inline int
-execsnoop_bpf__create_skeleton(struct execsnoop_bpf *obj);
+static inline int execsnoop_bpf__create_skeleton(struct execsnoop_bpf *obj);
 
-static inline struct execsnoop_bpf *
-execsnoop_bpf__open_opts(const struct bpf_object_open_opts *opts)
+static inline struct execsnoop_bpf *execsnoop_bpf__open_opts(const struct
+							     bpf_object_open_opts
+							     *opts)
 {
 	struct execsnoop_bpf *obj;
 
@@ -55,25 +54,22 @@ execsnoop_bpf__open_opts(const struct bpf_object_open_opts *opts)
 		goto err;
 
 	return obj;
-err:
+ err:
 	execsnoop_bpf__destroy(obj);
 	return NULL;
 }
 
-static inline struct execsnoop_bpf *
-execsnoop_bpf__open(void)
+static inline struct execsnoop_bpf *execsnoop_bpf__open(void)
 {
 	return execsnoop_bpf__open_opts(NULL);
 }
 
-static inline int
-execsnoop_bpf__load(struct execsnoop_bpf *obj)
+static inline int execsnoop_bpf__load(struct execsnoop_bpf *obj)
 {
 	return bpf_object__load_skeleton(obj->skeleton);
 }
 
-static inline struct execsnoop_bpf *
-execsnoop_bpf__open_and_load(void)
+static inline struct execsnoop_bpf *execsnoop_bpf__open_and_load(void)
 {
 	struct execsnoop_bpf *obj;
 
@@ -87,20 +83,17 @@ execsnoop_bpf__open_and_load(void)
 	return obj;
 }
 
-static inline int
-execsnoop_bpf__attach(struct execsnoop_bpf *obj)
+static inline int execsnoop_bpf__attach(struct execsnoop_bpf *obj)
 {
 	return bpf_object__attach_skeleton(obj->skeleton);
 }
 
-static inline void
-execsnoop_bpf__detach(struct execsnoop_bpf *obj)
+static inline void execsnoop_bpf__detach(struct execsnoop_bpf *obj)
 {
 	return bpf_object__detach_skeleton(obj->skeleton);
 }
 
-static inline int
-execsnoop_bpf__create_skeleton(struct execsnoop_bpf *obj)
+static inline int execsnoop_bpf__create_skeleton(struct execsnoop_bpf *obj)
 {
 	struct bpf_object_skeleton *s;
 
@@ -133,7 +126,8 @@ execsnoop_bpf__create_skeleton(struct execsnoop_bpf *obj)
 	/* programs */
 	s->prog_cnt = 2;
 	s->prog_skel_sz = sizeof(*s->progs);
-	s->progs = (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
+	s->progs =
+	    (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
 	if (!s->progs)
 		goto err;
 
@@ -2406,9 +2400,9 @@ execsnoop_bpf__create_skeleton(struct execsnoop_bpf *obj)
 \xf8\x01\0\0\0\0\0\0\x01\0\0\0\x10\0\0\0\x08\0\0\0\0\0\0\0\x18\0\0\0\0\0\0\0";
 
 	return 0;
-err:
+ err:
 	bpf_object__destroy_skeleton(s);
 	return -1;
 }
 
-#endif /* __EXECSNOOP_BPF_SKEL_H__ */
+#endif				/* __EXECSNOOP_BPF_SKEL_H__ */

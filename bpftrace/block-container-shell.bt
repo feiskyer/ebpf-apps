@@ -1,0 +1,21 @@
+#!/usr/bin/env bpftrace
+/* Block running sh or bash inside containers. */
+/* Run with "sudo bpftrace --unsafe block-container-shell.bt" */
+
+#include <linux/sched.h>
+#include <linux/nsproxy.h>
+#include <linux/utsname.h>
+#include <linux/pid_namespace.h>
+
+tracepoint:syscalls:sys_enter_execve,
+tracepoint:syscalls:sys_enter_execveat
+/comm == "bash" || comm == "sh"/ {
+  $task = (struct task_struct *)curtask;
+  $pidns = $task->nsproxy->pid_ns_for_children->ns.inum;
+  $cname = $task->nsproxy->uts_ns->name.nodename;
+  if ($pidns != 4026531836) /* TODO: replace 4026531836 with host pidns (lsns -t pid) */
+  {
+    printf("Killing shell command in container %s (pidns: %ld): %s ", $cname, $pidns, comm); join(args->argv);
+    signal(9);
+  }
+}

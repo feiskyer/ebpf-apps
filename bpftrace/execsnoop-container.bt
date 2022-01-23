@@ -1,0 +1,19 @@
+#!/usr/bin/env bpftrace
+/* Tracing execve and execveat with container pidns and uts name. */
+
+#include <linux/sched.h>
+#include <linux/nsproxy.h>
+#include <linux/utsname.h>
+#include <linux/pid_namespace.h>
+
+BEGIN {
+  printf("%-12s %-8s %-6s %-6s %-8s %s\n", "PIDNS", "CONTAINER", "PPID", "PID", "COMM", "ARGS");
+}
+
+tracepoint:syscalls:sys_enter_execve,
+tracepoint:syscalls:sys_enter_execveat {
+  $task = (struct task_struct *)curtask;
+  $pidns = $task->nsproxy->pid_ns_for_children->ns.inum;
+  $cname = $task->nsproxy->uts_ns->name.nodename;
+  printf("%-12ld %-8s %-6d %-6d %-8s", (uint64)$pidns, $cname, curtask->parent->pid, pid, comm); join(args->argv);
+}

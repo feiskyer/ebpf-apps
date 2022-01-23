@@ -21,8 +21,7 @@ struct bashreadline_bpf {
 	} links;
 };
 
-static void
-bashreadline_bpf__destroy(struct bashreadline_bpf *obj)
+static void bashreadline_bpf__destroy(struct bashreadline_bpf *obj)
 {
 	if (!obj)
 		return;
@@ -34,8 +33,9 @@ bashreadline_bpf__destroy(struct bashreadline_bpf *obj)
 static inline int
 bashreadline_bpf__create_skeleton(struct bashreadline_bpf *obj);
 
-static inline struct bashreadline_bpf *
-bashreadline_bpf__open_opts(const struct bpf_object_open_opts *opts)
+static inline struct bashreadline_bpf *bashreadline_bpf__open_opts(const struct
+								   bpf_object_open_opts
+								   *opts)
 {
 	struct bashreadline_bpf *obj;
 
@@ -48,25 +48,22 @@ bashreadline_bpf__open_opts(const struct bpf_object_open_opts *opts)
 		goto err;
 
 	return obj;
-err:
+ err:
 	bashreadline_bpf__destroy(obj);
 	return NULL;
 }
 
-static inline struct bashreadline_bpf *
-bashreadline_bpf__open(void)
+static inline struct bashreadline_bpf *bashreadline_bpf__open(void)
 {
 	return bashreadline_bpf__open_opts(NULL);
 }
 
-static inline int
-bashreadline_bpf__load(struct bashreadline_bpf *obj)
+static inline int bashreadline_bpf__load(struct bashreadline_bpf *obj)
 {
 	return bpf_object__load_skeleton(obj->skeleton);
 }
 
-static inline struct bashreadline_bpf *
-bashreadline_bpf__open_and_load(void)
+static inline struct bashreadline_bpf *bashreadline_bpf__open_and_load(void)
 {
 	struct bashreadline_bpf *obj;
 
@@ -80,14 +77,12 @@ bashreadline_bpf__open_and_load(void)
 	return obj;
 }
 
-static inline int
-bashreadline_bpf__attach(struct bashreadline_bpf *obj)
+static inline int bashreadline_bpf__attach(struct bashreadline_bpf *obj)
 {
 	return bpf_object__attach_skeleton(obj->skeleton);
 }
 
-static inline void
-bashreadline_bpf__detach(struct bashreadline_bpf *obj)
+static inline void bashreadline_bpf__detach(struct bashreadline_bpf *obj)
 {
 	return bpf_object__detach_skeleton(obj->skeleton);
 }
@@ -119,7 +114,8 @@ bashreadline_bpf__create_skeleton(struct bashreadline_bpf *obj)
 	/* programs */
 	s->prog_cnt = 1;
 	s->prog_skel_sz = sizeof(*s->progs);
-	s->progs = (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
+	s->progs =
+	    (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
 	if (!s->progs)
 		goto err;
 
@@ -391,9 +387,9 @@ bashreadline_bpf__create_skeleton(struct bashreadline_bpf *obj)
 \0\0\0";
 
 	return 0;
-err:
+ err:
 	bpf_object__destroy_skeleton(s);
 	return -1;
 }
 
-#endif /* __BASHREADLINE_BPF_SKEL_H__ */
+#endif				/* __BASHREADLINE_BPF_SKEL_H__ */
