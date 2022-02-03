@@ -6,7 +6,10 @@
 #include <bpf/bpf_tracing.h>
 
 #define EPERM 1
+
+#ifndef NULL
 #define NULL 0
+#endif
 
 static __always_inline int handle_new_process(struct task_struct *parent,
 					      struct task_struct *child)
