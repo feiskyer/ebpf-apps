@@ -1,6 +1,6 @@
 APPS= xdp-proxy
 LIBBPF_SRC := $(abspath ../../libbpf/src)
-LIBBPF_OBJ := $(abspath libbpf/libbpf.a)
+LIBBPF_OBJ := $(abspath ../../bpf-apps/libbpf/libbpf.a)
 INCLUDES := -Ilibbpf/usr/include -I../libbpf/include/uapi -I.
 
 .PHONY: all
