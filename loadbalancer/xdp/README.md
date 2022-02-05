@@ -8,6 +8,6 @@ docker run -itd --name=http2 --hostname=http2 feisky/webserver
 # Client
 docker run -itd --name=client alpine
 
-# LB
+# LB (XDP would be setup in xdp-proxy)
 docker run -itd --name=lb -v /sys:/sys --privileged alpine
 ```
