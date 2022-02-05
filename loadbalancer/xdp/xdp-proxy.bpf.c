@@ -7,15 +7,16 @@
 #include <bpf/bpf_endian.h>
 #include "xdp-proxy.h"
 
-/*
-struct {
+/* define a hashmap for userspace to update service endpoints */
+struct
+{
 	__uint(type, BPF_MAP_TYPE_HASH);
 	__type(key, __be32);
 	__type(value, struct endpoints);
-	 __uint(max_entries, 1024);
+	__uint(max_entries, 1024);
 } services SEC(".maps");
-*/
 
+/* Refer https://github.com/facebookincubator/katran/blob/main/katran/lib/bpf/csum_helpers.h#L30 */
 static __always_inline __u16 csum_fold_helper(__u64 csum)
 {
 	int i;
@@ -36,7 +37,7 @@ static __always_inline __u16 iph_csum(struct iphdr *iph)
 	return csum_fold_helper(csum);
 }
 
-SEC("xdp")
+SEC("xdp/xdp_proxy")
 int xdp_proxy(struct xdp_md *ctx)
 {
 	void *data = (void *)(long)ctx->data;
@@ -68,43 +69,42 @@ int xdp_proxy(struct xdp_md *ctx)
 		return XDP_PASS;
 	}
 
-	// __be32 svc1_key = SVC1_KEY;
-	// struct endpoints *ep = bpf_map_lookup_elem(&services, &svc1_key);
-	// if (!ep) {
-	// 	return XDP_PASS;
-	// }
+	__be32 svc1_key = SVC1_KEY;
+	struct endpoints *ep = bpf_map_lookup_elem(&services, &svc1_key);
+	if (!ep)
+	{
+		return XDP_PASS;
+	}
 	// bpf_printk("Client IP: %ld", ep->client);
 	// bpf_printk("Endpoint IPs: %ld, %ld", ep->ep1, ep->ep2);
 	// bpf_printk("New TCP packet %ld => %ld\n", iph->saddr, iph->daddr);
 
-	/*
-		ep1:    172.17.0.2 => 0x20011ac
-		ep2:    172.17.0.3 => 0x30011ac
-		client: 172.17.0.4 => 0x40011ac
-		vip:    172.17.0.5 => 0x50011ac
-	 */
-	if (iph->saddr == 0x40011ac /*ep- > client*/)
+	if (iph->saddr == ep->client)
 	{
-		iph->daddr = 0x20011ac /*ep- > ep1*/;
-		eth->h_dest[5] = 2;
-		if (bpf_get_prandom_u32() % 2 == 0)
+		iph->daddr = ep->ep1;
+		memcpy(eth->h_dest, ep->ep1_mac, ETH_ALEN);
+
+		/* simulate random selection of two endpoints */
+		if ((bpf_ktime_get_ns() & 0x1) == 0x1)
 		{
-			iph->daddr = 0x30011ac /*ep- > ep2*/;
-			eth->h_dest[5] = 3;
+			iph->daddr = ep->ep2;
+			memcpy(eth->h_dest, ep->ep2_mac, ETH_ALEN);
 		}
 	}
-	else if (iph->saddr == 0x20011ac || iph->saddr == 0x30011ac)
+	else
 	{
-		iph->daddr = 0x40011ac /*ep- > client*/;
-		eth->h_dest[5] = 4;
-	} else {
-		return XDP_PASS;
+		iph->daddr = ep->client;
+		memcpy(eth->h_dest, ep->client_mac, ETH_ALEN);
 	}
 
-	iph->saddr = 0x50011ac /*ep- > vip*/;
-	eth->h_source[5] = 5;
+	/* packet source is always LB itself */
+	iph->saddr = ep->vip;
+	memcpy(eth->h_source, ep->vip_mac, ETH_ALEN);
 
+	/* recalculate IP checksum */
 	iph->check = iph_csum(iph);
+
+	/* send packet back to network stack */
 	return XDP_TX;
 }
 
