@@ -5,23 +5,16 @@
 #include <linux/ip.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
+#include "xdp-proxy-v2.h"
 
-/*
-	Assuming IP and MAC addresses are following:
-
-	client       => 172.17.0.4 (Hex 0x40011ac) => 02:42:ac:11:00:04
-	loadbalancer => 172.17.0.5 (Hex 0x50011ac) => 02:42:ac:11:00:05
-	endpoint1    => 172.17.0.2 (Hex 0x20011ac) => 02:42:ac:11:00:02
-	endpoint2    => 172.17.0.3 (Hex 0x30011ac) => 02:42:ac:11:00:03
-*/
-#define CLIENT_IP 0x40011ac
-#define LOADBALANCER_IP 0x50011ac
-#define ENDPOINT1_IP 0x20011ac
-#define ENDPOINT2_IP 0x30011ac
-#define CLIENT_MAC_SUFFIX 0x04
-#define LOADBALANCER_MAC_SUFFIX 0x05
-#define ENDPOINT1_MAC_SUFFIX 0x02
-#define ENDPOINT2_MAC_SUFFIX 0x03
+/* define a hashmap for userspace to update service endpoints */
+struct
+{
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__type(key, __be32);
+	__type(value, struct endpoints);
+	__uint(max_entries, 1024);
+} services SEC(".maps");
 
 /* Refer https://github.com/facebookincubator/katran/blob/main/katran/lib/bpf/csum_helpers.h#L30 */
 static __always_inline __u16 csum_fold_helper(__u64 csum)
@@ -76,28 +69,37 @@ int xdp_proxy(struct xdp_md *ctx)
 		return XDP_PASS;
 	}
 
-	if (iph->saddr == CLIENT_IP)
+	__be32 svc1_key = SVC1_KEY;
+	struct endpoints *ep = bpf_map_lookup_elem(&services, &svc1_key);
+	if (!ep)
 	{
-		iph->daddr = ENDPOINT1_IP;
-		/* Only need to update the last byte */
-		eth->h_dest[5] = ENDPOINT1_MAC_SUFFIX;
+		return XDP_PASS;
+	}
+	// bpf_printk("Client IP: %ld", ep->client);
+	// bpf_printk("Endpoint IPs: %ld, %ld", ep->ep1, ep->ep2);
+	// bpf_printk("New TCP packet %ld => %ld\n", iph->saddr, iph->daddr);
+
+	if (iph->saddr == ep->client)
+	{
+		iph->daddr = ep->ep1;
+		memcpy(eth->h_dest, ep->ep1_mac, ETH_ALEN);
 
 		/* simulate random selection of two endpoints */
 		if ((bpf_ktime_get_ns() & 0x1) == 0x1)
 		{
-			iph->daddr = ENDPOINT2_IP;
-			eth->h_dest[5] = ENDPOINT2_MAC_SUFFIX;
+			iph->daddr = ep->ep2;
+			memcpy(eth->h_dest, ep->ep2_mac, ETH_ALEN);
 		}
 	}
 	else
 	{
-		iph->daddr = CLIENT_IP;
-		eth->h_dest[5] = CLIENT_MAC_SUFFIX;
+		iph->daddr = ep->client;
+		memcpy(eth->h_dest, ep->client_mac, ETH_ALEN);
 	}
 
 	/* packet source is always LB itself */
-	iph->saddr = LOADBALANCER_IP;
-	eth->h_source[5] = LOADBALANCER_MAC_SUFFIX;
+	iph->saddr = ep->vip;
+	memcpy(eth->h_source, ep->vip_mac, ETH_ALEN);
 
 	/* recalculate IP checksum */
 	iph->check = ipv4_csum(iph);
