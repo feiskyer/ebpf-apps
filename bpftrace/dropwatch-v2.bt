@@ -4,8 +4,6 @@
 // Add required kernel headers
 #include <linux/skbuff.h>
 #include <linux/ip.h>
-#include <linux/socket.h>
-#include <linux/netdevice.h>
 
 
 kprobe:kfree_skb
