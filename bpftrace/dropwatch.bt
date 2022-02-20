@@ -9,7 +9,7 @@
 
 kprobe:kfree_skb /comm=="curl"/
 {
-  // Firt arg is sk_buff.
+  // First arg is sk_buff.
   $skb = (struct sk_buff *)arg0;
 
   // Get network header, src IP and dst IP.
