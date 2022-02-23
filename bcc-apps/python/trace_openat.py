@@ -1,12 +1,39 @@
 #!/usr/bin/env python3
-# Tracing openat2() system call.
+# Tracing openat() system call.
 from bcc import BPF
 from bcc.utils import printb
 
+prog =''' 
+#include <uapi/linux/ptrace.h>
+#include <uapi/linux/limits.h>
+#include <linux/sched.h>
+
+// define the output data structure.
+struct data_t {
+	u32 pid;
+	u64 ts;
+	char comm[TASK_COMM_LEN];
+	char fname[NAME_MAX];
+};
+BPF_PERF_OUTPUT(events);
+
+TRACEPOINT_PROBE(syscalls, sys_enter_openat)
+{
+	struct data_t data = { };
+
+	data.pid = bpf_get_current_pid_tgid();
+	data.ts = bpf_ktime_get_ns();
+	if (bpf_get_current_comm(&data.comm, sizeof(data.comm)) == 0) {
+		bpf_probe_read_user(&data.fname, sizeof(data.fname), args->filename);
+	}
+
+	events.perf_submit(args, &data, sizeof(data));
+	return 0;
+}
+'''
 
 # 1) load BPF program
-b = BPF(src_file="trace_open.c")
-b.attach_kprobe(event="do_sys_openat2", fn_name="hello_world")
+b = BPF(text=prog)
 
 # 2) print header
 print("%-18s %-16s %-6s %-16s" % ("TIME(s)", "COMM", "PID", "FILE"))
