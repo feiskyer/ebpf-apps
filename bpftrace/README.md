@@ -10,4 +10,8 @@ sudo apt-get install -y bpftrace
 
 # RHEL8+/CentOS8+
 sudo dnf install -y bpftrace
+
+# Other distro via Docker
+docker pull quay.io/iovisor/bpftrace
+docker run -v /usr/local/bin:/usr/local/bin quay.io/iovisor/bpftrace /bin/bash -c "cp /usr/bin/bpftrace /usr/local/bin/bpftrace"
 ```
