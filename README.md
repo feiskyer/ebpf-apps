@@ -65,10 +65,10 @@ And to build bpf applications, the following development tools should also be in
 
 ```sh
 # Ubuntu
-sudo apt-get install -y libbpf-dev make clang llvm libelf-dev linux-tools-$(uname -r)
+sudo apt-get install -y make clang llvm libelf-dev linux-tools-$(uname -r)
 
 # RHEL
-sudo yum install -y libbpf-devel make clang llvm elfutils-libelf-devel bpftool
+sudo yum install -y make clang llvm elfutils-libelf-devel bpftool
 ```
 
 ## Useful Links
