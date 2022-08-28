@@ -51,7 +51,8 @@ int main(int argc, char **argv)
 
 	/* Attach the XDP program to eth0 */
 	int prog_id = bpf_program__fd(obj->progs.xdp_proxy);
-	err = bpf_set_link_xdp_fd(ifindex, prog_id, xdp_flags);
+	LIBBPF_OPTS(bpf_xdp_attach_opts, attach_opts);
+	err = bpf_xdp_attach(ifindex, prog_id, xdp_flags, &attach_opts);
 	if (err)
 	{
 		fprintf(stderr, "failed to attach BPF programs\n");
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
 
 cleanup:
 	/* detach and free XDP program on exit */
-	bpf_set_link_xdp_fd(ifindex, -1, xdp_flags);
+	bpf_xdp_detach(ifindex, xdp_flags, &attach_opts);
 	xdp_proxy_bpf__destroy(obj);
 	return err != 0;
 }

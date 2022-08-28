@@ -50,7 +50,6 @@ int main(int argc, char **argv)
 {
 	struct bashreadline_bpf *obj = NULL;
 	struct perf_buffer *pb = NULL;
-	struct perf_buffer_opts pb_opts;
 	off_t func_off;
 	int err = 0;
 
@@ -78,11 +77,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	/* Setup event callbacks */
-	pb_opts.sample_cb = handle_event;
-	pb_opts.lost_cb = handle_lost_events;
-	pb = perf_buffer__new(bpf_map__fd(obj->maps.events), PERF_BUFFER_PAGES,
-			      &pb_opts);
+	pb = perf_buffer__new(bpf_map__fd(obj->maps.events), PERF_BUFFER_PAGES, handle_event, handle_lost_events, NULL, NULL);
 	if (!pb) {
 		err = -errno;
 		warn("failed to open perf buffer: %d\n", err);

@@ -46,7 +46,8 @@ int main(int argc, char **argv)
 
 	/* Attach the XDP program to the specified network interface */
 	int prog_id = bpf_program__fd(obj->progs.xdp_prog_simple);
-	err = bpf_set_link_xdp_fd(ifindex, prog_id, xdp_flags);
+	LIBBPF_OPTS(bpf_xdp_attach_opts, attach_opts);
+	err = bpf_xdp_attach(ifindex, prog_id, xdp_flags, &attach_opts);
 	if (err) {
 		fprintf(stderr, "failed to attach BPF programs\n");
 		goto cleanup;
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
 	system("cat /sys/kernel/debug/tracing/trace_pipe");
 
  cleanup:
-	bpf_set_link_xdp_fd(ifindex, -1, xdp_flags);
+	bpf_xdp_detach(ifindex, xdp_flags, &attach_opts);
 	xdppass_bpf__destroy(obj);
 	return err != 0;
 }

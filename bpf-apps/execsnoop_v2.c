@@ -111,7 +111,6 @@ static void bump_memlock_rlimit(void)
 int main(int argc, char **argv)
 {
 	struct execsnoop_v2_bpf *skel;
-	struct perf_buffer_opts pb_opts;
 	struct perf_buffer *pb = NULL;
 	int err;
 
@@ -142,10 +141,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	/* setup event callbacks */
-	pb_opts.sample_cb = handle_event;
-	pb_opts.lost_cb = handle_lost_events;
-	pb = perf_buffer__new(bpf_map__fd(skel->maps.events), 64, &pb_opts);
+	pb = perf_buffer__new(bpf_map__fd(skel->maps.events), 64, handle_event, handle_lost_events, NULL, NULL);
 	err = libbpf_get_error(pb);
 	if (err) {
 		pb = NULL;

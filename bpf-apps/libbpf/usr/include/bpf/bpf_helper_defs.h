@@ -38,6 +38,10 @@ struct inode;
 struct socket;
 struct file;
 struct bpf_timer;
+struct mptcp_sock;
+struct bpf_dynptr;
+struct iphdr;
+struct ipv6hdr;
 
 /*
  * bpf_map_lookup_elem
@@ -352,6 +356,7 @@ static long (*bpf_clone_redirect)(struct __sk_buff *skb, __u32 ifindex, __u64 fl
 /*
  * bpf_get_current_pid_tgid
  *
+ * 	Get the current pid and tgid.
  *
  * Returns
  * 	A 64-bit integer containing the current tgid and pid, and
@@ -364,6 +369,7 @@ static __u64 (*bpf_get_current_pid_tgid)(void) = (void *) 14;
 /*
  * bpf_get_current_uid_gid
  *
+ * 	Get the current uid and gid.
  *
  * Returns
  * 	A 64-bit integer containing the current GID and UID, and
@@ -919,6 +925,7 @@ static __u32 (*bpf_get_hash_recalc)(struct __sk_buff *skb) = (void *) 34;
 /*
  * bpf_get_current_task
  *
+ * 	Get the current task.
  *
  * Returns
  * 	A pointer to the current task struct.
@@ -958,8 +965,8 @@ static long (*bpf_probe_write_user)(void *dst, const void *src, __u32 len) = (vo
  * Returns
  * 	The return value depends on the result of the test, and can be:
  *
- * 	* 0, if current task belongs to the cgroup2.
- * 	* 1, if current task does not belong to the cgroup2.
+ * 	* 1, if current task belongs to the cgroup2.
+ * 	* 0, if current task does not belong to the cgroup2.
  * 	* A negative error code, if an error occurred.
  */
 static long (*bpf_current_task_under_cgroup)(void *map, __u32 index) = (void *) 37;
@@ -998,7 +1005,8 @@ static long (*bpf_skb_change_tail)(struct __sk_buff *skb, __u32 len, __u64 flags
  * 	Pull in non-linear data in case the *skb* is non-linear and not
  * 	all of *len* are part of the linear section. Make *len* bytes
  * 	from *skb* readable and writable. If a zero value is passed for
- * 	*len*, then the whole length of the *skb* is pulled.
+ * 	*len*, then all bytes in the linear part of *skb* will be made
+ * 	readable and writable.
  *
  * 	This helper is only needed for reading and writing with direct
  * 	packet access.
@@ -1057,6 +1065,8 @@ static __s64 (*bpf_csum_update)(struct __sk_buff *skb, __wsum csum) = (void *) 4
  * 	recalculation the next time the kernel tries to access this
  * 	hash or when the **bpf_get_hash_recalc**\ () helper is called.
  *
+ * Returns
+ * 	void.
  */
 static void (*bpf_set_hash_invalid)(struct __sk_buff *skb) = (void *) 41;
 
@@ -1156,6 +1166,7 @@ static __u64 (*bpf_get_socket_cookie)(void *ctx) = (void *) 46;
 /*
  * bpf_get_socket_uid
  *
+ * 	Get the owner UID of the socked associated to *skb*.
  *
  * Returns
  * 	The owner UID of the socket associated to *skb*. If the socket
@@ -1228,10 +1239,12 @@ static long (*bpf_setsockopt)(void *bpf_socket, int level, int optname, void *op
  * 	There are two supported modes at this time:
  *
  * 	* **BPF_ADJ_ROOM_MAC**: Adjust room at the mac layer
- * 	  (room space is added or removed below the layer 2 header).
+ * 	  (room space is added or removed between the layer 2 and
+ * 	  layer 3 headers).
  *
  * 	* **BPF_ADJ_ROOM_NET**: Adjust room at the network layer
- * 	  (room space is added or removed below the layer 3 header).
+ * 	  (room space is added or removed between the layer 3 and
+ * 	  layer 4 headers).
  *
  * 	The following flags are supported at this time:
  *
@@ -1731,8 +1744,18 @@ static long (*bpf_skb_get_xfrm_state)(struct __sk_buff *skb, __u32 index, struct
  * 	**BPF_F_USER_STACK**
  * 		Collect a user space stack instead of a kernel stack.
  * 	**BPF_F_USER_BUILD_ID**
- * 		Collect buildid+offset instead of ips for user stack,
- * 		only valid if **BPF_F_USER_STACK** is also specified.
+ * 		Collect (build_id, file_offset) instead of ips for user
+ * 		stack, only valid if **BPF_F_USER_STACK** is also
+ * 		specified.
+ *
+ * 		*file_offset* is an offset relative to the beginning
+ * 		of the executable or shared object file backing the vma
+ * 		which the *ip* falls in. It is *not* an offset relative
+ * 		to that object's base address. Accordingly, it must be
+ * 		adjusted by adding (sh_addr - sh_offset), where
+ * 		sh_{addr,offset} correspond to the executable section
+ * 		containing *file_offset* in the object, for comparisons
+ * 		to symbols' st_value to be valid.
  *
  * 	**bpf_get_stack**\ () can collect up to
  * 	**PERF_MAX_STACK_DEPTH** both kernel and user frames, subject
@@ -1746,8 +1769,8 @@ static long (*bpf_skb_get_xfrm_state)(struct __sk_buff *skb, __u32 index, struct
  * 		# sysctl kernel.perf_event_max_stack=<new value>
  *
  * Returns
- * 	A non-negative value equal to or less than *size* on success,
- * 	or a negative error in case of failure.
+ * 	The non-negative copied *buf* length equal to or less than
+ * 	*size* on success, or a negative error in case of failure.
  */
 static long (*bpf_get_stack)(void *ctx, void *buf, __u32 size, __u64 flags) = (void *) 67;
 
@@ -2063,6 +2086,8 @@ static __u64 (*bpf_skb_cgroup_id)(struct __sk_buff *skb) = (void *) 79;
 /*
  * bpf_get_current_cgroup_id
  *
+ * 	Get the current cgroup id based on the cgroup within which
+ * 	the current task is running.
  *
  * Returns
  * 	A 64-bit integer containing the current cgroup id based
@@ -2453,10 +2478,11 @@ static struct bpf_sock *(*bpf_skc_lookup_tcp)(void *ctx, struct bpf_sock_tuple *
  *
  * 	*iph* points to the start of the IPv4 or IPv6 header, while
  * 	*iph_len* contains **sizeof**\ (**struct iphdr**) or
- * 	**sizeof**\ (**struct ip6hdr**).
+ * 	**sizeof**\ (**struct ipv6hdr**).
  *
  * 	*th* points to the start of the TCP header, while *th_len*
- * 	contains **sizeof**\ (**struct tcphdr**).
+ * 	contains the length of the TCP header (at least
+ * 	**sizeof**\ (**struct tcphdr**)).
  *
  * Returns
  * 	0 if *iph* and *th* are a valid SYN cookie ACK, or a negative
@@ -2679,10 +2705,11 @@ static long (*bpf_send_signal)(__u32 sig) = (void *) 109;
  *
  * 	*iph* points to the start of the IPv4 or IPv6 header, while
  * 	*iph_len* contains **sizeof**\ (**struct iphdr**) or
- * 	**sizeof**\ (**struct ip6hdr**).
+ * 	**sizeof**\ (**struct ipv6hdr**).
  *
  * 	*th* points to the start of the TCP header, while *th_len*
- * 	contains the length of the TCP header.
+ * 	contains the length of the TCP header with options (at least
+ * 	**sizeof**\ (**struct tcphdr**)).
  *
  * Returns
  * 	On success, lower 32 bits hold the generated SYN cookie in
@@ -3297,8 +3324,8 @@ static struct udp6_sock *(*bpf_skc_to_udp6_sock)(void *sk) = (void *) 140;
  * 		# sysctl kernel.perf_event_max_stack=<new value>
  *
  * Returns
- * 	A non-negative value equal to or less than *size* on success,
- * 	or a negative error in case of failure.
+ * 	The non-negative copied *buf* length equal to or less than
+ * 	*size* on success, or a negative error in case of failure.
  */
 static long (*bpf_get_task_stack)(struct task_struct *task, void *buf, __u32 size, __u64 flags) = (void *) 141;
 
@@ -4135,5 +4162,448 @@ static long (*bpf_kallsyms_lookup_name)(const char *name, int name_sz, int flags
  * 	**-EINVAL** for invalid **flags**.
  */
 static long (*bpf_find_vma)(struct task_struct *task, __u64 addr, void *callback_fn, void *callback_ctx, __u64 flags) = (void *) 180;
+
+/*
+ * bpf_loop
+ *
+ * 	For **nr_loops**, call **callback_fn** function
+ * 	with **callback_ctx** as the context parameter.
+ * 	The **callback_fn** should be a static function and
+ * 	the **callback_ctx** should be a pointer to the stack.
+ * 	The **flags** is used to control certain aspects of the helper.
+ * 	Currently, the **flags** must be 0. Currently, nr_loops is
+ * 	limited to 1 << 23 (~8 million) loops.
+ *
+ * 	long (\*callback_fn)(u32 index, void \*ctx);
+ *
+ * 	where **index** is the current index in the loop. The index
+ * 	is zero-indexed.
+ *
+ * 	If **callback_fn** returns 0, the helper will continue to the next
+ * 	loop. If return value is 1, the helper will skip the rest of
+ * 	the loops and return. Other return values are not used now,
+ * 	and will be rejected by the verifier.
+ *
+ *
+ * Returns
+ * 	The number of loops performed, **-EINVAL** for invalid **flags**,
+ * 	**-E2BIG** if **nr_loops** exceeds the maximum number of loops.
+ */
+static long (*bpf_loop)(__u32 nr_loops, void *callback_fn, void *callback_ctx, __u64 flags) = (void *) 181;
+
+/*
+ * bpf_strncmp
+ *
+ * 	Do strncmp() between **s1** and **s2**. **s1** doesn't need
+ * 	to be null-terminated and **s1_sz** is the maximum storage
+ * 	size of **s1**. **s2** must be a read-only string.
+ *
+ * Returns
+ * 	An integer less than, equal to, or greater than zero
+ * 	if the first **s1_sz** bytes of **s1** is found to be
+ * 	less than, to match, or be greater than **s2**.
+ */
+static long (*bpf_strncmp)(const char *s1, __u32 s1_sz, const char *s2) = (void *) 182;
+
+/*
+ * bpf_get_func_arg
+ *
+ * 	Get **n**-th argument (zero based) of the traced function (for tracing programs)
+ * 	returned in **value**.
+ *
+ *
+ * Returns
+ * 	0 on success.
+ * 	**-EINVAL** if n >= arguments count of traced function.
+ */
+static long (*bpf_get_func_arg)(void *ctx, __u32 n, __u64 *value) = (void *) 183;
+
+/*
+ * bpf_get_func_ret
+ *
+ * 	Get return value of the traced function (for tracing programs)
+ * 	in **value**.
+ *
+ *
+ * Returns
+ * 	0 on success.
+ * 	**-EOPNOTSUPP** for tracing programs other than BPF_TRACE_FEXIT or BPF_MODIFY_RETURN.
+ */
+static long (*bpf_get_func_ret)(void *ctx, __u64 *value) = (void *) 184;
+
+/*
+ * bpf_get_func_arg_cnt
+ *
+ * 	Get number of arguments of the traced function (for tracing programs).
+ *
+ *
+ * Returns
+ * 	The number of arguments of the traced function.
+ */
+static long (*bpf_get_func_arg_cnt)(void *ctx) = (void *) 185;
+
+/*
+ * bpf_get_retval
+ *
+ * 	Get the syscall's return value that will be returned to userspace.
+ *
+ * 	This helper is currently supported by cgroup programs only.
+ *
+ * Returns
+ * 	The syscall's return value.
+ */
+static int (*bpf_get_retval)(void) = (void *) 186;
+
+/*
+ * bpf_set_retval
+ *
+ * 	Set the syscall's return value that will be returned to userspace.
+ *
+ * 	This helper is currently supported by cgroup programs only.
+ *
+ * Returns
+ * 	0 on success, or a negative error in case of failure.
+ */
+static int (*bpf_set_retval)(int retval) = (void *) 187;
+
+/*
+ * bpf_xdp_get_buff_len
+ *
+ * 	Get the total size of a given xdp buff (linear and paged area)
+ *
+ * Returns
+ * 	The total size of a given xdp buffer.
+ */
+static __u64 (*bpf_xdp_get_buff_len)(struct xdp_md *xdp_md) = (void *) 188;
+
+/*
+ * bpf_xdp_load_bytes
+ *
+ * 	This helper is provided as an easy way to load data from a
+ * 	xdp buffer. It can be used to load *len* bytes from *offset* from
+ * 	the frame associated to *xdp_md*, into the buffer pointed by
+ * 	*buf*.
+ *
+ * Returns
+ * 	0 on success, or a negative error in case of failure.
+ */
+static long (*bpf_xdp_load_bytes)(struct xdp_md *xdp_md, __u32 offset, void *buf, __u32 len) = (void *) 189;
+
+/*
+ * bpf_xdp_store_bytes
+ *
+ * 	Store *len* bytes from buffer *buf* into the frame
+ * 	associated to *xdp_md*, at *offset*.
+ *
+ * Returns
+ * 	0 on success, or a negative error in case of failure.
+ */
+static long (*bpf_xdp_store_bytes)(struct xdp_md *xdp_md, __u32 offset, void *buf, __u32 len) = (void *) 190;
+
+/*
+ * bpf_copy_from_user_task
+ *
+ * 	Read *size* bytes from user space address *user_ptr* in *tsk*'s
+ * 	address space, and stores the data in *dst*. *flags* is not
+ * 	used yet and is provided for future extensibility. This helper
+ * 	can only be used by sleepable programs.
+ *
+ * Returns
+ * 	0 on success, or a negative error in case of failure. On error
+ * 	*dst* buffer is zeroed out.
+ */
+static long (*bpf_copy_from_user_task)(void *dst, __u32 size, const void *user_ptr, struct task_struct *tsk, __u64 flags) = (void *) 191;
+
+/*
+ * bpf_skb_set_tstamp
+ *
+ * 	Change the __sk_buff->tstamp_type to *tstamp_type*
+ * 	and set *tstamp* to the __sk_buff->tstamp together.
+ *
+ * 	If there is no need to change the __sk_buff->tstamp_type,
+ * 	the tstamp value can be directly written to __sk_buff->tstamp
+ * 	instead.
+ *
+ * 	BPF_SKB_TSTAMP_DELIVERY_MONO is the only tstamp that
+ * 	will be kept during bpf_redirect_*().  A non zero
+ * 	*tstamp* must be used with the BPF_SKB_TSTAMP_DELIVERY_MONO
+ * 	*tstamp_type*.
+ *
+ * 	A BPF_SKB_TSTAMP_UNSPEC *tstamp_type* can only be used
+ * 	with a zero *tstamp*.
+ *
+ * 	Only IPv4 and IPv6 skb->protocol are supported.
+ *
+ * 	This function is most useful when it needs to set a
+ * 	mono delivery time to __sk_buff->tstamp and then
+ * 	bpf_redirect_*() to the egress of an iface.  For example,
+ * 	changing the (rcv) timestamp in __sk_buff->tstamp at
+ * 	ingress to a mono delivery time and then bpf_redirect_*()
+ * 	to sch_fq@phy-dev.
+ *
+ * Returns
+ * 	0 on success.
+ * 	**-EINVAL** for invalid input
+ * 	**-EOPNOTSUPP** for unsupported protocol
+ */
+static long (*bpf_skb_set_tstamp)(struct __sk_buff *skb, __u64 tstamp, __u32 tstamp_type) = (void *) 192;
+
+/*
+ * bpf_ima_file_hash
+ *
+ * 	Returns a calculated IMA hash of the *file*.
+ * 	If the hash is larger than *size*, then only *size*
+ * 	bytes will be copied to *dst*
+ *
+ * Returns
+ * 	The **hash_algo** is returned on success,
+ * 	**-EOPNOTSUP** if the hash calculation failed or **-EINVAL** if
+ * 	invalid arguments are passed.
+ */
+static long (*bpf_ima_file_hash)(struct file *file, void *dst, __u32 size) = (void *) 193;
+
+/*
+ * bpf_kptr_xchg
+ *
+ * 	Exchange kptr at pointer *map_value* with *ptr*, and return the
+ * 	old value. *ptr* can be NULL, otherwise it must be a referenced
+ * 	pointer which will be released when this helper is called.
+ *
+ * Returns
+ * 	The old value of kptr (which can be NULL). The returned pointer
+ * 	if not NULL, is a reference which must be released using its
+ * 	corresponding release function, or moved into a BPF map before
+ * 	program exit.
+ */
+static void *(*bpf_kptr_xchg)(void *map_value, void *ptr) = (void *) 194;
+
+/*
+ * bpf_map_lookup_percpu_elem
+ *
+ * 	Perform a lookup in *percpu map* for an entry associated to
+ * 	*key* on *cpu*.
+ *
+ * Returns
+ * 	Map value associated to *key* on *cpu*, or **NULL** if no entry
+ * 	was found or *cpu* is invalid.
+ */
+static void *(*bpf_map_lookup_percpu_elem)(void *map, const void *key, __u32 cpu) = (void *) 195;
+
+/*
+ * bpf_skc_to_mptcp_sock
+ *
+ * 	Dynamically cast a *sk* pointer to a *mptcp_sock* pointer.
+ *
+ * Returns
+ * 	*sk* if casting is valid, or **NULL** otherwise.
+ */
+static struct mptcp_sock *(*bpf_skc_to_mptcp_sock)(void *sk) = (void *) 196;
+
+/*
+ * bpf_dynptr_from_mem
+ *
+ * 	Get a dynptr to local memory *data*.
+ *
+ * 	*data* must be a ptr to a map value.
+ * 	The maximum *size* supported is DYNPTR_MAX_SIZE.
+ * 	*flags* is currently unused.
+ *
+ * Returns
+ * 	0 on success, -E2BIG if the size exceeds DYNPTR_MAX_SIZE,
+ * 	-EINVAL if flags is not 0.
+ */
+static long (*bpf_dynptr_from_mem)(void *data, __u32 size, __u64 flags, struct bpf_dynptr *ptr) = (void *) 197;
+
+/*
+ * bpf_ringbuf_reserve_dynptr
+ *
+ * 	Reserve *size* bytes of payload in a ring buffer *ringbuf*
+ * 	through the dynptr interface. *flags* must be 0.
+ *
+ * 	Please note that a corresponding bpf_ringbuf_submit_dynptr or
+ * 	bpf_ringbuf_discard_dynptr must be called on *ptr*, even if the
+ * 	reservation fails. This is enforced by the verifier.
+ *
+ * Returns
+ * 	0 on success, or a negative error in case of failure.
+ */
+static long (*bpf_ringbuf_reserve_dynptr)(void *ringbuf, __u32 size, __u64 flags, struct bpf_dynptr *ptr) = (void *) 198;
+
+/*
+ * bpf_ringbuf_submit_dynptr
+ *
+ * 	Submit reserved ring buffer sample, pointed to by *data*,
+ * 	through the dynptr interface. This is a no-op if the dynptr is
+ * 	invalid/null.
+ *
+ * 	For more information on *flags*, please see
+ * 	'bpf_ringbuf_submit'.
+ *
+ * Returns
+ * 	Nothing. Always succeeds.
+ */
+static void (*bpf_ringbuf_submit_dynptr)(struct bpf_dynptr *ptr, __u64 flags) = (void *) 199;
+
+/*
+ * bpf_ringbuf_discard_dynptr
+ *
+ * 	Discard reserved ring buffer sample through the dynptr
+ * 	interface. This is a no-op if the dynptr is invalid/null.
+ *
+ * 	For more information on *flags*, please see
+ * 	'bpf_ringbuf_discard'.
+ *
+ * Returns
+ * 	Nothing. Always succeeds.
+ */
+static void (*bpf_ringbuf_discard_dynptr)(struct bpf_dynptr *ptr, __u64 flags) = (void *) 200;
+
+/*
+ * bpf_dynptr_read
+ *
+ * 	Read *len* bytes from *src* into *dst*, starting from *offset*
+ * 	into *src*.
+ * 	*flags* is currently unused.
+ *
+ * Returns
+ * 	0 on success, -E2BIG if *offset* + *len* exceeds the length
+ * 	of *src*'s data, -EINVAL if *src* is an invalid dynptr or if
+ * 	*flags* is not 0.
+ */
+static long (*bpf_dynptr_read)(void *dst, __u32 len, struct bpf_dynptr *src, __u32 offset, __u64 flags) = (void *) 201;
+
+/*
+ * bpf_dynptr_write
+ *
+ * 	Write *len* bytes from *src* into *dst*, starting from *offset*
+ * 	into *dst*.
+ * 	*flags* is currently unused.
+ *
+ * Returns
+ * 	0 on success, -E2BIG if *offset* + *len* exceeds the length
+ * 	of *dst*'s data, -EINVAL if *dst* is an invalid dynptr or if *dst*
+ * 	is a read-only dynptr or if *flags* is not 0.
+ */
+static long (*bpf_dynptr_write)(struct bpf_dynptr *dst, __u32 offset, void *src, __u32 len, __u64 flags) = (void *) 202;
+
+/*
+ * bpf_dynptr_data
+ *
+ * 	Get a pointer to the underlying dynptr data.
+ *
+ * 	*len* must be a statically known value. The returned data slice
+ * 	is invalidated whenever the dynptr is invalidated.
+ *
+ * Returns
+ * 	Pointer to the underlying dynptr data, NULL if the dynptr is
+ * 	read-only, if the dynptr is invalid, or if the offset and length
+ * 	is out of bounds.
+ */
+static void *(*bpf_dynptr_data)(struct bpf_dynptr *ptr, __u32 offset, __u32 len) = (void *) 203;
+
+/*
+ * bpf_tcp_raw_gen_syncookie_ipv4
+ *
+ * 	Try to issue a SYN cookie for the packet with corresponding
+ * 	IPv4/TCP headers, *iph* and *th*, without depending on a
+ * 	listening socket.
+ *
+ * 	*iph* points to the IPv4 header.
+ *
+ * 	*th* points to the start of the TCP header, while *th_len*
+ * 	contains the length of the TCP header (at least
+ * 	**sizeof**\ (**struct tcphdr**)).
+ *
+ * Returns
+ * 	On success, lower 32 bits hold the generated SYN cookie in
+ * 	followed by 16 bits which hold the MSS value for that cookie,
+ * 	and the top 16 bits are unused.
+ *
+ * 	On failure, the returned value is one of the following:
+ *
+ * 	**-EINVAL** if *th_len* is invalid.
+ */
+static __s64 (*bpf_tcp_raw_gen_syncookie_ipv4)(struct iphdr *iph, struct tcphdr *th, __u32 th_len) = (void *) 204;
+
+/*
+ * bpf_tcp_raw_gen_syncookie_ipv6
+ *
+ * 	Try to issue a SYN cookie for the packet with corresponding
+ * 	IPv6/TCP headers, *iph* and *th*, without depending on a
+ * 	listening socket.
+ *
+ * 	*iph* points to the IPv6 header.
+ *
+ * 	*th* points to the start of the TCP header, while *th_len*
+ * 	contains the length of the TCP header (at least
+ * 	**sizeof**\ (**struct tcphdr**)).
+ *
+ * Returns
+ * 	On success, lower 32 bits hold the generated SYN cookie in
+ * 	followed by 16 bits which hold the MSS value for that cookie,
+ * 	and the top 16 bits are unused.
+ *
+ * 	On failure, the returned value is one of the following:
+ *
+ * 	**-EINVAL** if *th_len* is invalid.
+ *
+ * 	**-EPROTONOSUPPORT** if CONFIG_IPV6 is not builtin.
+ */
+static __s64 (*bpf_tcp_raw_gen_syncookie_ipv6)(struct ipv6hdr *iph, struct tcphdr *th, __u32 th_len) = (void *) 205;
+
+/*
+ * bpf_tcp_raw_check_syncookie_ipv4
+ *
+ * 	Check whether *iph* and *th* contain a valid SYN cookie ACK
+ * 	without depending on a listening socket.
+ *
+ * 	*iph* points to the IPv4 header.
+ *
+ * 	*th* points to the TCP header.
+ *
+ * Returns
+ * 	0 if *iph* and *th* are a valid SYN cookie ACK.
+ *
+ * 	On failure, the returned value is one of the following:
+ *
+ * 	**-EACCES** if the SYN cookie is not valid.
+ */
+static long (*bpf_tcp_raw_check_syncookie_ipv4)(struct iphdr *iph, struct tcphdr *th) = (void *) 206;
+
+/*
+ * bpf_tcp_raw_check_syncookie_ipv6
+ *
+ * 	Check whether *iph* and *th* contain a valid SYN cookie ACK
+ * 	without depending on a listening socket.
+ *
+ * 	*iph* points to the IPv6 header.
+ *
+ * 	*th* points to the TCP header.
+ *
+ * Returns
+ * 	0 if *iph* and *th* are a valid SYN cookie ACK.
+ *
+ * 	On failure, the returned value is one of the following:
+ *
+ * 	**-EACCES** if the SYN cookie is not valid.
+ *
+ * 	**-EPROTONOSUPPORT** if CONFIG_IPV6 is not builtin.
+ */
+static long (*bpf_tcp_raw_check_syncookie_ipv6)(struct ipv6hdr *iph, struct tcphdr *th) = (void *) 207;
+
+/*
+ * bpf_ktime_get_tai_ns
+ *
+ * 	A nonsettable system-wide clock derived from wall-clock time but
+ * 	ignoring leap seconds.  This clock does not experience
+ * 	discontinuities and backwards jumps caused by NTP inserting leap
+ * 	seconds as CLOCK_REALTIME does.
+ *
+ * 	See: **clock_gettime**\ (**CLOCK_TAI**)
+ *
+ * Returns
+ * 	Current *ktime*.
+ */
+static __u64 (*bpf_ktime_get_tai_ns)(void) = (void *) 208;
 
 
