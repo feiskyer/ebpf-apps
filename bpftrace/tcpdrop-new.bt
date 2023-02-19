@@ -1,0 +1,138 @@
+#!/usr/bin/env bpftrace
+/* Watching TCP drop via kfree_skb, requires kernel >= 5.19 */
+
+#ifndef BPFTRACE_HAVE_BTF
+#include <linux/socket.h>
+#include <net/sock.h>
+#else
+#include <sys/socket.h>
+#endif
+
+BEGIN
+{
+  printf("Tracing tcp drops. Hit Ctrl-C to end.\n");
+  printf("%-8s %-8s %-16s %-21s %-21s %-16s %-16s\n", "TIME", "PID", "COMM", "SADDR:SPORT", "DADDR:DPORT", "STATE", "REASON");
+
+  // See https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
+  @tcp_states[1] = "ESTABLISHED";
+  @tcp_states[2] = "SYN_SENT";
+  @tcp_states[3] = "SYN_RECV";
+  @tcp_states[4] = "FIN_WAIT1";
+  @tcp_states[5] = "FIN_WAIT2";
+  @tcp_states[6] = "TIME_WAIT";
+  @tcp_states[7] = "CLOSE";
+  @tcp_states[8] = "CLOSE_WAIT";
+  @tcp_states[9] = "LAST_ACK";
+  @tcp_states[10] = "LISTEN";
+  @tcp_states[11] = "CLOSING";
+  @tcp_states[12] = "NEW_SYN_RECV";
+
+
+  // See https://elixir.bootlin.com/linux/v6.0/source/include/net/dropreason.h
+  //     cat /sys/kernel/debug/tracing/events/skb/kfree_skb/format
+  @drop_reasons[1] = "SKB_DROP_REASON_NOT_SPECIFIED";
+  @drop_reasons[2] = "SKB_DROP_REASON_NO_SOCKET";
+  @drop_reasons[3] = "SKB_DROP_REASON_PKT_TOO_SMALL";
+  @drop_reasons[4] = "SKB_DROP_REASON_TCP_CSUM";
+  @drop_reasons[5] = "SKB_DROP_REASON_SOCKET_FILTER";
+  @drop_reasons[6] = "SKB_DROP_REASON_UDP_CSUM";
+  @drop_reasons[7] = "SKB_DROP_REASON_NETFILTER_DROP";
+  @drop_reasons[8] = "SKB_DROP_REASON_OTHERHOST";
+  @drop_reasons[9] = "SKB_DROP_REASON_IP_CSUM";
+  @drop_reasons[10] = "SKB_DROP_REASON_IP_INHDR";
+  @drop_reasons[11] = "SKB_DROP_REASON_IP_RPFILTER";
+  @drop_reasons[12] = "SKB_DROP_REASON_UNICAST_IN_L2_MULTICAST";
+  @drop_reasons[13] = "SKB_DROP_REASON_XFRM_POLICY";
+  @drop_reasons[14] = "SKB_DROP_REASON_IP_NOPROTO";
+  @drop_reasons[15] = "SKB_DROP_REASON_SOCKET_RCVBUFF";
+  @drop_reasons[16] = "SKB_DROP_REASON_PROTO_MEM";
+  @drop_reasons[17] = "SKB_DROP_REASON_TCP_MD5NOTFOUND";
+  @drop_reasons[18] = "SKB_DROP_REASON_TCP_MD5UNEXPECTED";
+  @drop_reasons[19] = "SKB_DROP_REASON_TCP_MD5FAILURE";
+  @drop_reasons[20] = "SKB_DROP_REASON_SOCKET_BACKLOG";
+  @drop_reasons[21] = "SKB_DROP_REASON_TCP_FLAGS";
+  @drop_reasons[22] = "SKB_DROP_REASON_TCP_ZEROWINDOW";
+  @drop_reasons[23] = "SKB_DROP_REASON_TCP_OLD_DATA";
+  @drop_reasons[24] = "SKB_DROP_REASON_TCP_OVERWINDOW";
+  @drop_reasons[25] = "SKB_DROP_REASON_TCP_OFOMERGE";
+  @drop_reasons[26] = "SKB_DROP_REASON_TCP_RFC7323_PAWS";
+  @drop_reasons[27] = "SKB_DROP_REASON_TCP_INVALID_SEQUENCE";
+  @drop_reasons[28] = "SKB_DROP_REASON_TCP_RESET";
+  @drop_reasons[29] = "SKB_DROP_REASON_TCP_INVALID_SYN";
+  @drop_reasons[30] = "SKB_DROP_REASON_TCP_CLOSE";
+  @drop_reasons[31] = "SKB_DROP_REASON_TCP_FASTOPEN";
+  @drop_reasons[32] = "SKB_DROP_REASON_TCP_OLD_ACK";
+  @drop_reasons[33] = "SKB_DROP_REASON_TCP_TOO_OLD_ACK";
+  @drop_reasons[34] = "SKB_DROP_REASON_TCP_ACK_UNSENT_DATA";
+  @drop_reasons[35] = "SKB_DROP_REASON_TCP_OFO_QUEUE_PRUNE";
+  @drop_reasons[36] = "SKB_DROP_REASON_TCP_OFO_DROP";
+  @drop_reasons[37] = "SKB_DROP_REASON_IP_OUTNOROUTES";
+  @drop_reasons[38] = "SKB_DROP_REASON_BPF_CGROUP_EGRESS";
+  @drop_reasons[39] = "SKB_DROP_REASON_IPV6DISABLED";
+  @drop_reasons[40] = "SKB_DROP_REASON_NEIGH_CREATEFAIL";
+  @drop_reasons[41] = "SKB_DROP_REASON_NEIGH_FAILED";
+  @drop_reasons[42] = "SKB_DROP_REASON_NEIGH_QUEUEFULL";
+  @drop_reasons[43] = "SKB_DROP_REASON_NEIGH_DEAD";
+  @drop_reasons[44] = "SKB_DROP_REASON_TC_EGRESS";
+  @drop_reasons[45] = "SKB_DROP_REASON_QDISC_DROP";
+  @drop_reasons[46] = "SKB_DROP_REASON_CPU_BACKLOG";
+  @drop_reasons[47] = "SKB_DROP_REASON_XDP";
+  @drop_reasons[48] = "SKB_DROP_REASON_TC_INGRESS";
+  @drop_reasons[49] = "SKB_DROP_REASON_UNHANDLED_PROTO";
+  @drop_reasons[50] = "SKB_DROP_REASON_SKB_CSUM";
+  @drop_reasons[51] = "SKB_DROP_REASON_SKB_GSO_SEG";
+  @drop_reasons[52] = "SKB_DROP_REASON_SKB_UCOPY_FAULT";
+  @drop_reasons[53] = "SKB_DROP_REASON_DEV_HDR";
+  @drop_reasons[54] = "SKB_DROP_REASON_DEV_READY";
+  @drop_reasons[55] = "SKB_DROP_REASON_FULL_RING";
+  @drop_reasons[56] = "SKB_DROP_REASON_NOMEM";
+  @drop_reasons[57] = "SKB_DROP_REASON_HDR_TRUNC";
+  @drop_reasons[58] = "SKB_DROP_REASON_TAP_FILTER";
+  @drop_reasons[59] = "SKB_DROP_REASON_TAP_TXFILTER";
+  @drop_reasons[60] = "SKB_DROP_REASON_ICMP_CSUM";
+  @drop_reasons[61] = "SKB_DROP_REASON_INVALID_PROTO";
+  @drop_reasons[62] = "SKB_DROP_REASON_IP_INADDRERRORS";
+  @drop_reasons[63] = "SKB_DROP_REASON_IP_INNOROUTES";
+  @drop_reasons[64] = "SKB_DROP_REASON_PKT_TOO_BIG";
+  @drop_reasons[65] = "SKB_DROP_REASON_MAX";
+}
+
+tracepoint:skb:kfree_skb
+{
+  $reason = args->reason;
+  $skb = (struct sk_buff *)args->skbaddr;
+  $sk = ((struct sock *) $skb->sk);
+  $inet_family = $sk->__sk_common.skc_family;
+
+  if ($reason > SKB_DROP_REASON_NOT_SPECIFIED &&
+       ($inet_family == AF_INET || $inet_family == AF_INET6))
+  {
+    if ($inet_family == AF_INET) {
+      $daddr = ntop($sk->__sk_common.skc_daddr);
+      $saddr = ntop($sk->__sk_common.skc_rcv_saddr);
+    } else {
+      $daddr = ntop($sk->__sk_common.skc_v6_daddr.in6_u.u6_addr8);
+      $saddr = ntop($sk->__sk_common.skc_v6_rcv_saddr.in6_u.u6_addr8);
+    }
+    $lport = $sk->__sk_common.skc_num;
+    $dport = $sk->__sk_common.skc_dport;
+
+    // Destination port is big endian, it must be flipped
+    $dport = bswap($dport);
+
+    $state = $sk->__sk_common.skc_state;
+    $statestr = @tcp_states[$state];
+    $reasonstr = @drop_reasons[$reason];
+
+    time("%H:%M:%S ");
+    printf("%-8d %-16s ", pid, comm);
+    printf("%39s:%-6d %39s:%-6d %-16s %-16s\n", $saddr, $lport, $daddr, $dport, $statestr, $reasonstr);
+    printf("%s\n", kstack);
+  }
+}
+
+END
+{
+  clear(@tcp_states);
+  clear(@drop_reasons);
+}
