@@ -14,6 +14,7 @@ eBPF sample apps based on [BCC](https://github.com/iovisor/bcc), [libbpf](https:
 * [kernel](kernel): eBPF samples built with kernel source.
 * [rust](rust): eBPF samples with Rust bindings.
 * [tools](tools): Tools for eBPF (e.g. bpftool and faddr2line).
+* [chatgpt](chatgpt): generating eBPF programs with ChatGPT.
 
 ## Pre-requisites
 
