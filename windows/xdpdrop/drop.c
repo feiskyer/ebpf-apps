@@ -5,7 +5,7 @@
 #include "net/tcp.h"
 
 SEC("xdp")
-int DropPacket(xdp_md_t *ctx)
+int drop_tcp_80(xdp_md_t *ctx)
 {
     void *data = (void *)(long)ctx->data;
     void *data_end = (void *)(long)ctx->data_end;
@@ -18,9 +18,9 @@ int DropPacket(xdp_md_t *ctx)
      }
 
       /* do nothing for non-IP packets */
-      if (eth->h_proto != bpf_htons(ETH_P_IP))
-      {
-          return XDP_PASS;
+     if (eth->h_proto != bpf_htons(ETH_P_IP) && eth->Type != bpf_htons(ETHERNET_TYPE_IPV4))
+     {
+         return XDP_PASS;
       }
 
      struct iphdr *iph = data + sizeof(struct ethhdr);
@@ -38,7 +38,7 @@ int DropPacket(xdp_md_t *ctx)
 
      struct tcphdr *tcph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
      /* abort on illegal packets */
-     if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr) > data_end) // ((void *)(tcph + 1) > data_end)
+     if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr) > data_end)
      {
          return XDP_DROP;
      }

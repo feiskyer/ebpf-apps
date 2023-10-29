@@ -58,3 +58,6 @@ dkms.conf
 
 # Rust
 target
+
+# Other
+.DS_Store

@@ -1,0 +1,78 @@
+﻿  Performing Custom Build Tools
+  
+  
+      Directory: C:\Users\aaz\connection_tracker\x64\Debug
+  
+  
+  Mode                 LastWriteTime         Length Name                                                                 
+  ----                 -------------         ------ ----                                                                 
+  d-----        10/29/2023   3:42 AM                conn_track_km                                                        
+  MSBuild version 17.7.2+d6990bcfa for .NET Framework
+  Build started 10/29/2023 3:42:23 AM.
+  
+  Project "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.vcxproj" on node 1 (default targets).
+  DriverBuildNotifications:
+    Building 'conn_track_km' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
+    Using KMDF 1.15.
+  PrepareForBuild:
+    Creating directory "x64\Debug\".
+    Creating directory "x64\Debug\conn_track_km.tlog\".
+  InitializeBuildStatus:
+    Creating "x64\Debug\conn_track_km.tlog\unsuccessfulbuild" because "AlwaysCreate" was specified.
+    Touching "x64\Debug\conn_track_km.tlog\unsuccessfulbuild".
+  PreBuildEvent:
+    C:\Users\aaz\connection_tracker\packages\eBPF-for-Windows.0.12.0\build\native\bin\bpf2c --bpf conn_track.o --sys conn_track_driver.c  
+    :VCEnd
+  ClCompile:
+    C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\bin\HostX64\x64\CL.exe /c /I"C:\Users\aaz\connection_tracker\packages\eBPF-for-Windows.0.12.0\build\native\include" /Ix64\Debug\ /Zi /nologo /W4 /WX /diagnostics:column /Od /Oi /Oy- /GL /D _WIN64 /D _AMD64_ /D AMD64 /D DEPRECATE_DDK_FUNCTIONS=1 /D MSC_NOOPT /D _WIN32_WINNT=0x0A00 /D WINVER=0x0A00 /D WINNT=1 /D NTDDI_VERSION=0xA00000C /D DBG=1 /GF /Gm- /Zp8 /GS /guard:cf /Gy /fp:precise /Qspectre /Zc:wchar_t- /Zc:forScope /Zc:inline /GR- /Fo"x64\Debug\\" /Fd"x64\Debug\vc143.pdb" /external:W4 /Gz /wd4189 /wd4245 /wd4748 /wd4603 /wd4627 /wd4986 /wd4987 /FI"C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\shared\warning.h" /FC /errorReport:queue /kernel -cbstring -d2epilogunwind /d1import_no_registry /d2AllowCompatibleILVersions /d2Zi+ conn_track_driver.c
+    conn_track_driver.c
+  Link:
+    C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.37.32822\bin\HostX64\x64\link.exe /ERRORREPORT:QUEUE /OUT:"C:\Users\aaz\connection_tracker\x64\Debug\conn_track.sys" /VERSION:"10.0" /INCREMENTAL:NO /NOLOGO /WX /SECTION:"INIT,d" Netio.lib "C:\Program Files (x86)\Windows Kits\10\lib\10.0.22621.0\km\x64\BufferOverflowFastFailK.lib" "C:\Program Files (x86)\Windows Kits\10\lib\10.0.22621.0\km\x64\ntoskrnl.lib" "C:\Program Files (x86)\Windows Kits\10\lib\10.0.22621.0\km\x64\hal.lib" "C:\Program Files (x86)\Windows Kits\10\lib\10.0.22621.0\km\x64\wmilib.lib" /NODEFAULTLIB /MANIFEST:NO /DEBUG /PDB:"C:\Users\aaz\connection_tracker\x64\Debug\conn_track.pdb" /SUBSYSTEM:NATIVE,"10.00" /Driver /OPT:REF /OPT:ICF /LTCG /LTCGOUT:"x64\Debug\conn_track.iobj" /ENTRY:"GsDriverEntry" /RELEASE /IMPLIB:"C:\Users\aaz\connection_tracker\x64\Debug\conn_track.lib" /MERGE:"_TEXT=.text;_PAGE=PAGE" /MACHINE:X64 /PROFILE /guard:cf /kernel /IGNORE:4198,4010,4037,4039,4065,4070,4078,4087,4089,4221,4108,4088,4218,4218,4235 /osversion:10.0 /pdbcompress /debugtype:pdata x64\Debug\conn_track_driver.obj
+    Generating code
+    Finished generating code
+    conn_track.vcxproj -> C:\Users\aaz\connection_tracker\x64\Debug\conn_track.sys
+  Project "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.vcxproj" (1) is building "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.vcxproj" (1:2) on node 1 (TestSign target(s)).
+  TestSign:
+    The driver will be test-signed. Driver signing options can be changed from the project properties.
+    Sign Inputs: C:\Users\aaz\connection_tracker\x64\Debug\conn_track.sys
+    C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x86\signtool.exe sign /ph /fd "SHA256" /sha1 "15D232012D145C6B3CDE8715C099A372A74A7956" 
+    Done Adding Additional Store
+    Successfully signed: C:\Users\aaz\connection_tracker\x64\Debug\conn_track.sys
+    
+    Certificate used for signing: issued to = WDKTestCert aaz,133430227648180584 and thumbprint = 15D232012D145C6B3CDE8715C099A372A74A7956
+    Exported Certificate: C:\Users\aaz\connection_tracker\x64\Debug\conn_track.cer
+  Done Building Project "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.vcxproj" (TestSign target(s)).
+  DriverPackageTarget:
+    Packaging up the following projects for the following configurations:
+    
+     Configuration='' Platform=''
+    
+    
+    The following files will be packaged:
+    
+    File to package:      C:\Users\aaz\connection_tracker\x64\Debug\conn_track.sys.
+    Location in Package:  \conn_track.sys.
+    Requested by project: 
+    
+    
+    Copying file from "C:\Users\aaz\connection_tracker\x64\Debug\conn_track.sys" to "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.sys".
+  Inf2Cat:
+    Inf2Cat task was skipped as there were no inf files to process
+    
+  Project "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.vcxproj" (1) is building "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.vcxproj" (1:3) on node 1 (TestSign target(s)).
+  TestSign:
+    The driver package will be test-signed. Driver signing options can be changed from the project properties.
+    No files to sign, skipping SignTask.
+  Done Building Project "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.vcxproj" (TestSign target(s)).
+  FinalizeBuildStatus:
+    Deleting file "x64\Debug\conn_track_km.tlog\unsuccessfulbuild".
+    Touching "x64\Debug\conn_track_km.tlog\conn_track_km.lastbuildstate".
+  Done Building Project "C:\Users\aaz\connection_tracker\x64\Debug\conn_track_km\conn_track.vcxproj" (default targets).
+  
+  Build succeeded.
+      0 Warning(s)
+      0 Error(s)
+  
+  Time Elapsed 00:00:02.20
+  
+  
