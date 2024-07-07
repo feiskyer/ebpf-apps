@@ -141,7 +141,8 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	pb = perf_buffer__new(bpf_map__fd(skel->maps.events), 64, handle_event, handle_lost_events, NULL, NULL);
+	pb = perf_buffer__new(bpf_map__fd(skel->maps.events), 64, handle_event,
+			      handle_lost_events, NULL, NULL);
 	err = libbpf_get_error(pb);
 	if (err) {
 		pb = NULL;

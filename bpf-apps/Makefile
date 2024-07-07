@@ -1,4 +1,4 @@
-APPS = hello execsnoop execsnoop_v2 bashreadline hello_btf block_shell xdppass tc_block_tcp
+APPS = hello execsnoop execsnoop_v2 bashreadline hello_btf block_shell xdppass tc_block_tcp http_trace
 bpftool = $(shell which bpftool || ../tools/bpftool)
 LIBBPF_SRC := $(abspath ../libbpf/src)
 LIBBPF_OBJ := $(abspath libbpf/libbpf.a)

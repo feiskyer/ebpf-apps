@@ -36,6 +36,17 @@
 *.x86_64
 *.hex
 
+# Binaries
+bpf-apps/bashreadline
+bpf-apps/block_shell
+bpf-apps/execsnoop
+bpf-apps/execsnoop_v2
+bpf-apps/hello
+bpf-apps/hello_btf
+bpf-apps/tc_block_tcp
+bpf-apps/xdppass
+bpf-apps/http_trace
+
 # Debug files
 *.dSYM/
 *.su
