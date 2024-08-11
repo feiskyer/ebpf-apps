@@ -15,7 +15,7 @@
 #include <time.h>
 
 #include "http_trace.h"
-#include "http_trace.skel.h"
+#include "https_trace_bad.skel.h"
 
 // 用于打印调试信息
 static int libbpf_print_fn(enum libbpf_print_level level, const char *format,
@@ -62,6 +62,22 @@ static inline int open_raw_sock(const char *name)
 	return sock;
 }
 
+void print_hex(const unsigned char array[], size_t size)
+{
+	size_t trimmed_size = size;
+	for (trimmed_size = size; trimmed_size > 0; trimmed_size--) {
+		if (array[trimmed_size - 1] != 0) {
+			break;
+		}
+	}
+
+	printf("HTTPS Data (hex):");
+	for (size_t i = 0; i < trimmed_size; i++) {
+		printf("%02X", (unsigned char)array[i]);
+	}
+	printf("\n\n");
+}
+
 // 输出 HTTP 请求和响应信息（注意：长度截断至MAX_LENGTH）
 static int handle_event(void *ctx, void *data, size_t data_sz)
 {
@@ -70,8 +86,9 @@ static int handle_event(void *ctx, void *data, size_t data_sz)
 
 	inet_ntop(AF_INET, &e->saddr, saddr, sizeof(saddr));
 	inet_ntop(AF_INET, &e->daddr, daddr, sizeof(daddr));
-	printf("%s:%d -> %s:%d (length: %d)\n%s\n\n", saddr, e->sport, daddr,
-	       e->dport, e->payload_length, e->payload);
+	printf("%s:%d -> %s:%d (length: %d)\nHTTPS Data (txt):%s\n", saddr,
+	       e->sport, daddr, e->dport, e->payload_length, e->payload);
+	print_hex(e->payload, sizeof(e->payload));
 	return 0;
 }
 
@@ -91,7 +108,7 @@ static void bump_memlock_rlimit(void)
 
 int main(int argc, char **argv)
 {
-	struct http_trace_bpf *skel;
+	struct https_trace_bad_bpf *skel;
 	struct ring_buffer *rb = NULL;
 	int err = 0;
 
@@ -106,7 +123,7 @@ int main(int argc, char **argv)
 	bump_memlock_rlimit();
 
 	// 加载BPF程序
-	skel = http_trace_bpf__open_and_load();
+	skel = https_trace_bad_bpf__open_and_load();
 	if (!skel) {
 		fprintf(stderr, "Failed to open and load BPF skeleton\n");
 		return 1;
@@ -124,14 +141,14 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Failed to open raw socket\n");
 		goto cleanup;
 	}
-	int prog_fd = bpf_program__fd(skel->progs.http_trace);
+	int prog_fd = bpf_program__fd(skel->progs.https_trace);
 	if (setsockopt
 	    (sock, SOL_SOCKET, SO_ATTACH_BPF, &prog_fd, sizeof(prog_fd))) {
 		fprintf(stderr, "Failed to attach eBPF prog\n");
 		goto cleanup;
 	}
 	// 从ring buffer中读取数据
-	printf("Tracing HTTP traffic... Hit Ctrl-C to end.\n");
+	printf("Tracing HTTPS traffic... Hit Ctrl-C to end.\n");
 	while (!exiting) {
 		err = ring_buffer__poll(rb, 100);
 		if (err == -EINTR) {
@@ -147,6 +164,6 @@ int main(int argc, char **argv)
  cleanup:
 	// 释放资源
 	ring_buffer__free(rb);
-	http_trace_bpf__destroy(skel);
+	https_trace_bad_bpf__destroy(skel);
 	return -err;
 }

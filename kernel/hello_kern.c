@@ -9,4 +9,4 @@ int bpf_prog(void *ctx)
 	return 0;
 }
 
-char _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "Dual BSD/GPL";

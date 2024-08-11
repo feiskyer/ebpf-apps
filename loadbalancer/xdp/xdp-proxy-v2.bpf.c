@@ -108,4 +108,4 @@ int xdp_proxy(struct xdp_md *ctx)
 	return XDP_TX;
 }
 
-char _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "Dual BSD/GPL";

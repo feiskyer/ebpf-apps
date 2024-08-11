@@ -56,4 +56,4 @@ int tc_ingress(struct __sk_buff *sk)
 	return TC_ACT_OK;
 }
 
-char _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "Dual BSD/GPL";

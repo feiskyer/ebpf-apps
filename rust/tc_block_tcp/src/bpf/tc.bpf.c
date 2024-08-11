@@ -85,4 +85,4 @@ int handle_tc(struct __sk_buff *skb)
 	return TC_ACT_OK;
 }
 
-char _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "Dual BSD/GPL";

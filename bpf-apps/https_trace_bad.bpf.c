@@ -25,7 +25,7 @@ static inline int ip_is_fragment(struct __sk_buff *skb)
 }
 
 SEC("socket")
-int http_trace(struct __sk_buff *skb)
+int https_trace(struct __sk_buff *skb)
 {
 	struct event_t *event;
 	__u8 ip_proto;
@@ -62,32 +62,30 @@ int http_trace(struct __sk_buff *skb)
 	__u32 tcp_hlen = tcph.doff;
 	tcp_hlen = tcp_hlen << 2;
 
-	// 只跟踪 TCP 80 端口的数据包
-	if (tcph.source != bpf_htons(80) && tcph.dest != bpf_htons(80)) {
+	// 只跟踪 TCP 443 端口的数据包
+	if (tcph.source != bpf_htons(443) && tcph.dest != bpf_htons(443)) {
 		return 0;
 	}
 
 	// 计算HTTP payload的偏移和长度
 	__u32 payload_offset = ETH_HLEN + iph_len + tcp_hlen;
 	__u32 payload_length = bpf_ntohs(ip_total_length) - iph_len - tcp_hlen;
-	// HTTP 报文最短为7个字节
 	if (payload_length < 7) {
 		return 0;
 	}
 
-	// 只跟踪 GET、POST、PUT、DELETE 方法的数据包
-	// HTTP 开头的数据包是服务器端的响应
-	char start_buffer[7] = { };
-	bpf_skb_load_bytes(skb, payload_offset, start_buffer, 7);
-	if (bpf_strncmp(start_buffer, 3, "GET") != 0 &&
-	    bpf_strncmp(start_buffer, 4, "POST") != 0 &&
-	    bpf_strncmp(start_buffer, 3, "PUT") != 0 &&
-	    bpf_strncmp(start_buffer, 6, "DELETE") != 0 &&
-	    bpf_strncmp(start_buffer, 4, "HTTP") != 0) {
-		return 0;
-	}
+	// 数据内容不可见，故而无法过滤内容
+	// char start_buffer[7] = { };
+	// bpf_skb_load_bytes(skb, payload_offset, start_buffer, 7);
+	// if (bpf_strncmp(start_buffer, 3, "GET") != 0 &&
+	//     bpf_strncmp(start_buffer, 4, "POST") != 0 &&
+	//     bpf_strncmp(start_buffer, 3, "PUT") != 0 &&
+	//     bpf_strncmp(start_buffer, 6, "DELETE") != 0 &&
+	//     bpf_strncmp(start_buffer, 4, "HTTP") != 0) {
+	//      return 0;
+	// }
 
-	// 读取HTTP信息并将其提交到环形缓冲区
+	// 读取HTTPS信息并将其提交到环形缓冲区
 	event = bpf_ringbuf_reserve(&events, sizeof(*event), 0);
 	if (!event) {
 		return 0;
