@@ -29,7 +29,7 @@ sudo yum install bcc-tools bcc-devel
 Please follow [INSTALL.md](https://github.com/iovisor/bcc/blob/master/INSTALL.md#source) to see the detailed guides. For example, on Ubuntu 20.04+:
 
 ```sh
-sudo apt install -y bison build-essential cmake flex git libedit-dev llvm-dev libclang-dev python zlib1g-dev libelf-dev libfl-dev python3-distutils
+sudo apt install -y bison build-essential cmake flex git libedit-dev llvm-dev libclang-dev python3 zlib1g-dev libelf-dev libfl-dev python3-setuptools libpolly-18-dev
 
 git clone https://github.com/iovisor/bcc.git
 mkdir bcc/build; cd bcc/build

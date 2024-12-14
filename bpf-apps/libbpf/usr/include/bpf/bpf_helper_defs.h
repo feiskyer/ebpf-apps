@@ -44,6 +44,14 @@ struct bpf_dynptr;
 struct iphdr;
 struct ipv6hdr;
 
+#ifndef __bpf_fastcall
+#if __has_attribute(bpf_fastcall)
+#define __bpf_fastcall __attribute__((bpf_fastcall))
+#else
+#define __bpf_fastcall
+#endif
+#endif
+
 /*
  * bpf_map_lookup_elem
  *
@@ -203,7 +211,7 @@ static __u32 (* const bpf_get_prandom_u32)(void) = (void *) 7;
  * Returns
  * 	The SMP id of the processor running the program.
  */
-static __u32 (* const bpf_get_smp_processor_id)(void) = (void *) 8;
+static __bpf_fastcall __u32 (* const bpf_get_smp_processor_id)(void) = (void *) 8;
 
 /*
  * bpf_skb_store_bytes
@@ -1224,7 +1232,7 @@ static long (* const bpf_set_hash)(struct __sk_buff *skb, __u32 hash) = (void *)
  * 	  **TCP_SYNCNT**, **TCP_USER_TIMEOUT**, **TCP_NOTSENT_LOWAT**,
  * 	  **TCP_NODELAY**, **TCP_MAXSEG**, **TCP_WINDOW_CLAMP**,
  * 	  **TCP_THIN_LINEAR_TIMEOUTS**, **TCP_BPF_DELACK_MAX**,
- * 	  **TCP_BPF_RTO_MIN**.
+ * 	  **TCP_BPF_RTO_MIN**, **TCP_BPF_SOCK_OPS_CB_FLAGS**.
  * 	* **IPPROTO_IP**, which supports *optname* **IP_TOS**.
  * 	* **IPPROTO_IPV6**, which supports the following *optname*\ s:
  * 	  **IPV6_TCLASS**, **IPV6_AUTOFLOWLABEL**.
@@ -1510,10 +1518,6 @@ static long (* const bpf_getsockopt)(void *bpf_socket, int level, int optname, v
  * 	with the **CONFIG_BPF_KPROBE_OVERRIDE** configuration
  * 	option, and in this case it only works on functions tagged with
  * 	**ALLOW_ERROR_INJECTION** in the kernel code.
- *
- * 	Also, the helper is only available for the architectures having
- * 	the CONFIG_FUNCTION_ERROR_INJECTION option. As of this writing,
- * 	x86 architecture is the only one to support this feature.
  *
  * Returns
  * 	0
@@ -1851,6 +1855,10 @@ static long (* const bpf_skb_load_bytes_relative)(const void *skb, __u32 offset,
  * 		for the nexthop. If the src addr cannot be derived,
  * 		**BPF_FIB_LKUP_RET_NO_SRC_ADDR** is returned. In this
  * 		case, *params*->dmac and *params*->smac are not set either.
+ * 	**BPF_FIB_LOOKUP_MARK**
+ * 		Use the mark present in *params*->mark for the fib lookup.
+ * 		This option should not be used with BPF_FIB_LOOKUP_DIRECT,
+ * 		as it only has meaning for full lookups.
  *
  * 	*ctx* is either **struct xdp_md** for XDP programs or
  * 	**struct sk_buff** tc cls_act programs.
@@ -3798,7 +3806,7 @@ static __u64 (* const bpf_ktime_get_coarse_ns)(void) = (void *) 160;
  *
  * Returns
  * 	The **hash_algo** is returned on success,
- * 	**-EOPNOTSUP** if IMA is disabled or **-EINVAL** if
+ * 	**-EOPNOTSUPP** if IMA is disabled or **-EINVAL** if
  * 	invalid arguments are passed.
  */
 static long (* const bpf_ima_inode_hash)(struct inode *inode, void *dst, __u32 size) = (void *) 161;
@@ -4216,7 +4224,7 @@ static long (* const bpf_find_vma)(struct task_struct *task, __u64 addr, void *c
  * 	Currently, the **flags** must be 0. Currently, nr_loops is
  * 	limited to 1 << 23 (~8 million) loops.
  *
- * 	long (\*callback_fn)(u32 index, void \*ctx);
+ * 	long (\*callback_fn)(u64 index, void \*ctx);
  *
  * 	where **index** is the current index in the loop. The index
  * 	is zero-indexed.
@@ -4412,7 +4420,7 @@ static long (* const bpf_skb_set_tstamp)(struct __sk_buff *skb, __u64 tstamp, __
  *
  * Returns
  * 	The **hash_algo** is returned on success,
- * 	**-EOPNOTSUP** if the hash calculation failed or **-EINVAL** if
+ * 	**-EOPNOTSUPP** if the hash calculation failed or **-EINVAL** if
  * 	invalid arguments are passed.
  */
 static long (* const bpf_ima_file_hash)(struct file *file, void *dst, __u32 size) = (void *) 193;
@@ -4420,9 +4428,10 @@ static long (* const bpf_ima_file_hash)(struct file *file, void *dst, __u32 size
 /*
  * bpf_kptr_xchg
  *
- * 	Exchange kptr at pointer *map_value* with *ptr*, and return the
- * 	old value. *ptr* can be NULL, otherwise it must be a referenced
- * 	pointer which will be released when this helper is called.
+ * 	Exchange kptr at pointer *dst* with *ptr*, and return the old value.
+ * 	*dst* can be map value or local kptr. *ptr* can be NULL, otherwise
+ * 	it must be a referenced pointer which will be released when this helper
+ * 	is called.
  *
  * Returns
  * 	The old value of kptr (which can be NULL). The returned pointer
@@ -4430,7 +4439,7 @@ static long (* const bpf_ima_file_hash)(struct file *file, void *dst, __u32 size
  * 	corresponding release function, or moved into a BPF map before
  * 	program exit.
  */
-static void *(* const bpf_kptr_xchg)(void *map_value, void *ptr) = (void *) 194;
+static void *(* const bpf_kptr_xchg)(void *dst, void *ptr) = (void *) 194;
 
 /*
  * bpf_map_lookup_percpu_elem

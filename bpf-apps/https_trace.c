@@ -88,7 +88,6 @@ char *find_library_path(const char *libname)
 		fprintf(stderr, "Failed to run command: %s\n", cmd);
 		return NULL;
 	}
-
 	// 格式: libssl3.so (libc6,x86-64) => /lib/x86_64-linux-gnu/libssl3.so
 	if (fgets(path, sizeof(path) - 1, fp) != NULL) {
 		char *p = strrchr(path, '>');
@@ -129,14 +128,12 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Failed to find libssl.so\n");
 		return 1;
 	}
-
 	// 加载BPF程序
 	skel = https_trace_bpf__open_and_load();
 	if (!skel) {
 		fprintf(stderr, "Failed to open and load BPF skeleton\n");
 		return 1;
 	}
-
 	// 创建buffer并绑定事件处理回调
 	pb = perf_buffer__new(bpf_map__fd(skel->maps.events), 16,
 			      handle_event, NULL, NULL, NULL);
@@ -144,7 +141,6 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Failed to create perf buffer\n");
 		goto cleanup;
 	}
-
 	// 挂载uprobe到OpenSSL库
 	printf("Attaching uprobe to %s\n", libssl_path);
 	// SSL_read

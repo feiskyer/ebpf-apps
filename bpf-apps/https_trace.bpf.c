@@ -12,8 +12,7 @@ struct {
 	__uint(key_size, sizeof(__u32));
 	__uint(value_size, sizeof(__u32));
 	__uint(max_entries, 1024);
-}
-events SEC(".maps");
+} events SEC(".maps");
 
 // 用于存储大量数据的缓冲区（避免在BPF程序中分配大量内存）
 struct {
@@ -51,13 +50,11 @@ static int SSL_rw_exit(struct pt_regs *ctx, int rw)
 	if (!bufp) {
 		return 0;
 	}
-
 	// 从寄存器中读取函数调用的返回值
 	int len = PT_REGS_RC(ctx);
 	if (len <= 0) {
 		return 0;
 	}
-
 	// 分配一个数据缓冲区
 	__u32 zero = 0;
 	struct event_t *event = bpf_map_lookup_elem(&data_buffer_heap, &zero);
@@ -71,12 +68,13 @@ static int SSL_rw_exit(struct pt_regs *ctx, int rw)
 	bpf_get_current_comm(&event->comm, sizeof(event->comm));
 
 	// 读取SSL读写缓冲区的数据
-	event->len = (size_t)MAX_BUF_LENGTH < (size_t)len ? (size_t) MAX_BUF_LENGTH : (size_t) len;
+	event->len =
+	    (size_t)MAX_BUF_LENGTH <
+	    (size_t)len ? (size_t)MAX_BUF_LENGTH : (size_t)len;
 	if (bufp != NULL) {
 		bpf_probe_read_user(event->buf, event->len,
 				    (const char *)*bufp);
 	}
-
 	// 将数据缓冲区的数据发送到perf event
 	bpf_map_delete_elem(&bufs, &tid);
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, event,
