@@ -6252,9 +6252,9 @@ enum state {
 };
 
 typedef int (*decompress_fn)(unsigned char *, long int,
-			     long int(*)(void *, long unsigned int),
-			     long int(*)(void *, long unsigned int),
-			     unsigned char *, long int *, void(*)(char *));
+			     long int (*)(void *, long unsigned int),
+			     long int (*)(void *, long unsigned int),
+			     unsigned char *, long int *, void (*)(char *));
 
 enum key_being_used_for {
 	VERIFYING_MODULE_SIGNATURE = 0,
@@ -32551,9 +32551,9 @@ struct tcf_chain {
 };
 
 typedef unsigned int (*bpf_dispatcher_fn)(const void *, const struct bpf_insn *,
-					  unsigned int(*)(const void *,
-							  const struct bpf_insn
-							  *));
+					  unsigned int (*)(const void *,
+							   const struct bpf_insn
+							   *));
 
 struct xdp_rxq_info {
 	struct net_device *dev;
@@ -85569,8 +85569,8 @@ struct ipv6_stub {
 	int (*xfrm6_rcv_encap)(struct sk_buff *, int, __be32, int);
 	struct neigh_table *nd_tbl;
 	int (*ipv6_fragment)(struct net *, struct sock *, struct sk_buff *,
-			     int(*)(struct net *, struct sock *,
-				    struct sk_buff *));
+			     int (*)(struct net *, struct sock *,
+				     struct sk_buff *));
 	struct net_device *(*ipv6_dev_find) (struct net *,
 					     const struct in6_addr *,
 					     struct net_device *);
@@ -85868,7 +85868,7 @@ struct inet_connection_sock {
 struct tcp_ulp_ops {
 	struct list_head list;
 	int (*init)(struct sock *);
-	void (*update)(struct sock *, struct proto *, void(*)(struct sock *));
+	void (*update)(struct sock *, struct proto *, void (*)(struct sock *));
 	void (*release)(struct sock *);
 	int (*get_info)(struct sock *, struct sk_buff *);
 	size_t (*get_info_size)(const struct sock *);
@@ -112381,7 +112381,7 @@ struct nf_queue_entry;
 struct nf_ipv6_ops {
 	void (*route_input)(struct sk_buff *);
 	int (*fragment)(struct net *, struct sock *, struct sk_buff *,
-			int(*)(struct net *, struct sock *, struct sk_buff *));
+			int (*)(struct net *, struct sock *, struct sk_buff *));
 	int (*reroute)(struct sk_buff *, const struct nf_queue_entry *);
 };
 
@@ -114837,7 +114837,7 @@ struct netlbl_calipso_ops {
 	int (*doi_remove)(u32, struct netlbl_audit *);
 	struct calipso_doi *(*doi_getdef) (u32);
 	void (*doi_putdef)(struct calipso_doi *);
-	int (*doi_walk)(u32 *, int(*)(struct calipso_doi *, void *), void *);
+	int (*doi_walk)(u32 *, int (*)(struct calipso_doi *, void *), void *);
 	int (*sock_getattr)(struct sock *, struct netlbl_lsm_secattr *);
 	int (*sock_setattr)(struct sock *, const struct calipso_doi *,
 			    const struct netlbl_lsm_secattr *);
@@ -137368,11 +137368,11 @@ struct trace_event_data_offsets_cpuhp_exit {
 };
 
 typedef void (*btf_trace_cpuhp_enter)(void *, unsigned int, int, int,
-				      int(*)(unsigned int));
+				      int (*)(unsigned int));
 
 typedef void (*btf_trace_cpuhp_multi_enter)(void *, unsigned int, int, int,
-					    int(*)(unsigned int,
-						   struct hlist_node *),
+					    int (*)(unsigned int,
+						    struct hlist_node *),
 					    struct hlist_node *);
 
 typedef void (*btf_trace_cpuhp_exit)(void *, unsigned int, int, int, int);
@@ -149887,7 +149887,7 @@ struct vme_bridge {
 		      u32);
 	int (*lm_get)(struct vme_lm_resource *, long long unsigned int *, u32 *,
 		      u32 *);
-	int (*lm_attach)(struct vme_lm_resource *, int, void(*)(void *),
+	int (*lm_attach)(struct vme_lm_resource *, int, void (*)(void *),
 			 void *);
 	int (*lm_detach)(struct vme_lm_resource *, int);
 	int (*slot_get)(struct vme_bridge *);

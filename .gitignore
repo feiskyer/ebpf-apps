@@ -49,6 +49,8 @@ bpf-apps/http_trace
 bpf-apps/https_trace
 bpf-apps/https_trace_bad
 bpf-apps/xdp_drop_test
+bpf-apps/xdp_drop
+bpf-apps/xdp_drop_trace
 
 # Debug files
 *.dSYM/

@@ -21,8 +21,7 @@ struct {
 	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
 	__uint(key_size, sizeof(u32));
 	__uint(value_size, sizeof(u32));
-}
-events SEC(".maps");
+} events SEC(".maps");
 
 static __always_inline bool valid_uid(uid_t uid)
 {

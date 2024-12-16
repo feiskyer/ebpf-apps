@@ -12,7 +12,8 @@ struct {
 	__uint(key_size, sizeof(__u32));
 	__uint(value_size, sizeof(__u32));
 	__uint(max_entries, 1024);
-} events SEC(".maps");
+}
+events SEC(".maps");
 
 // 用于存储大量数据的缓冲区（避免在BPF程序中分配大量内存）
 struct {
