@@ -1,0 +1,24 @@
+// Executed when we enter the bpf() syscall
+tracepoint:syscalls:sys_enter_bpf {
+	if (args.cmd == 5) {
+		printf("%d:%d: bpf() entering, loading prog %s\n", pid, tid, args.uattr->prog_name)
+	}
+}
+
+// Executed right before bpf_check() returns
+kretprobe:bpf_check {
+	printf("%d:%d: Verification error: %d\n", pid, tid, retval)
+}
+
+// Executed right before bpf_int_jit_compile() returns
+kretprobe:bpf_int_jit_compile {
+	printf("%d:%d: JIT: Done, compiled?: %d\n", pid, tid, ((struct bpf_prog *) retval)->jited)
+}
+
+// Executed right before the bpf() syscall returns
+tracepoint:syscalls:sys_exit_bpf {
+	if (args.ret < 0) {
+		printf("%d:%d: bpf() returning, ret: %d\n", pid, tid, args.ret)
+	}
+}
+

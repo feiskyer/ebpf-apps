@@ -37,6 +37,7 @@
 *.hex
 
 # Binaries
+go/trace
 bpf-apps/bashreadline
 bpf-apps/block_shell
 bpf-apps/execsnoop

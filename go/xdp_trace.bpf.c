@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+//go:build ignore
 #include "vmlinux.h"
 #include <bpf/bpf_tracing.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 
-SEC("fentry/xdp_prog_drop")
-int BPF_PROG(trace_on_entry, struct xdp_md *xdp)
+SEC("fentry/xdp")
+int BPF_PROG(fentry_xdp, struct xdp_md *xdp)
 {
 	void *data = (void *)(long)BPF_CORE_READ(xdp, data);
 	void *data_end = (void *)(long)BPF_CORE_READ(xdp, data_end);
@@ -16,8 +17,8 @@ int BPF_PROG(trace_on_entry, struct xdp_md *xdp)
 	return 0;
 }
 
-SEC("fexit/xdp_prog_drop")
-int BPF_PROG(trace_on_exit, struct xdp_md *xdp, int ret)
+SEC("fexit/xdp")
+int BPF_PROG(fexit_xdp, struct xdp_md *xdp, int ret)
 {
 	bpf_printk("[fexit/xdp] ret: %d", ret);
 	return 0;

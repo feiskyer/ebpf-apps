@@ -56,10 +56,11 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	printf
-	    ("Successfully started! Tracing /sys/kernel/debug/tracing/trace_pipe...\n");
-
-	system("cat /sys/kernel/debug/tracing/trace_pipe");
+	printf("Successfully started! ...\n");
+	// system("cat /sys/kernel/debug/tracing/trace_pipe");
+	while(1) {
+		sleep(1);
+	}
 
  cleanup:
 	bpf_xdp_detach(ifindex, xdp_flags, &attach_opts);
