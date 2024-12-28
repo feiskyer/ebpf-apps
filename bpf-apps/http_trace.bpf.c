@@ -95,9 +95,7 @@ int http_trace(struct __sk_buff *skb)
 	event->sport = bpf_ntohs(tcph.source);
 	event->dport = bpf_ntohs(tcph.dest);
 	event->payload_length = payload_length;
-	__u32 read_length =
-	    payload_length > MAX_LENGTH ? MAX_LENGTH : payload_length;
-	bpf_skb_load_bytes(skb, payload_offset, event->payload, read_length);
+	bpf_skb_load_bytes(skb, payload_offset, event->payload, sizeof(event->payload));
 	bpf_skb_load_bytes(skb, ETH_HLEN + offsetof(struct iphdr, saddr),
 			   &event->saddr, 4);
 	bpf_skb_load_bytes(skb, ETH_HLEN + offsetof(struct iphdr, daddr),
