@@ -1,0 +1,17 @@
+[package]
+name = "hello-aya-ebpf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hello-aya-common = { path = "../hello-aya-common" }
+aya-ebpf = { workspace = true }
+aya-log-ebpf = { workspace = true }
+network-types = "0.0.7"
+
+[build-dependencies]
+which = { workspace = true }
+
+[[bin]]
+name = "hello-aya"
+path = "src/main.rs"
