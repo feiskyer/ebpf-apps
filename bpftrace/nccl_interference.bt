@@ -1,0 +1,30 @@
+#!/usr/bin/env bpftrace
+// nccl_interference.bt - NCCL 干扰源定位
+
+// 追踪网络软中断频率
+// NET_RX 的 softirq 向量号是 3，频率升高通常意味着网卡处理压力大
+tracepoint:irq:softirq_entry /args->vec == 3/ {
+    @net_rx_count++;
+    @net_rx_time[cpu] = nsecs;
+}
+
+// 追踪 CPU 上下文切换
+// 如果 NCCL 使用的 CPU 核心上有频繁的上下文切换，可能导致通信延迟
+tracepoint:sched:sched_switch {
+    @ctx_switch++;
+}
+
+// 追踪 TCP 接收
+// NCCL 底层走 TCP/IP 时，这个指标反映了网络数据包的接收情况
+kprobe:tcp_v4_rcv {
+    @tcp_recv++;
+}
+
+// 每秒输出一次统计信息
+interval:s:1 {
+    printf("NET_RX: %lld, CTX_SWITCH: %lld, TCP_RECV: %lld\n",
+           @net_rx_count, @ctx_switch, @tcp_recv);
+    clear(@net_rx_count);
+    clear(@ctx_switch);
+    clear(@tcp_recv);
+}

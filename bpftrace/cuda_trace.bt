@@ -1,0 +1,36 @@
+#!/usr/bin/env bpftrace
+// cuda_trace.bt - CUDA API 快速追踪
+
+// 追踪 cudaMalloc 调用
+uprobe:/usr/lib/x86_64-linux-gnu/libcudart.so:cudaMalloc {
+    printf("PID %d (%s): cudaMalloc size=%zu bytes\n",
+           pid, comm, arg1);
+}
+
+// 追踪 cudaMalloc 返回
+uretprobe:/usr/lib/x86_64-linux-gnu/libcudart.so:cudaMalloc {
+    printf("PID %d: cudaMalloc returned %d\n", pid, retval);
+}
+
+// 追踪 kernel 启动频率
+uprobe:/usr/lib/x86_64-linux-gnu/libcudart.so:cudaLaunchKernel {
+    @launches[pid, comm] = count();
+}
+
+// 追踪 cudaFree
+uprobe:/usr/lib/x86_64-linux-gnu/libcudart.so:cudaFree {
+    printf("PID %d: cudaFree ptr=%p\n", pid, arg0);
+}
+
+// 统计 cudaMemcpy 方向
+uprobe:/usr/lib/x86_64-linux-gnu/libcudart.so:cudaMemcpy {
+    // kind: 1=H2D, 2=D2H, 3=D2D
+    @memcpy_kind[arg3] = count();
+    @memcpy_bytes[arg3] = sum(arg2);
+}
+
+END {
+    print(@launches);
+    print(@memcpy_kind);
+    print(@memcpy_bytes);
+}

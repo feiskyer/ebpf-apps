@@ -1,0 +1,38 @@
+#!/usr/bin/env bpftrace
+// nvidia_driver.bt - NVIDIA 驱动层追踪
+
+// 追踪 ioctl 调用频率（识别高频命令模式）
+kprobe:nvidia_unlocked_ioctl {
+    @ioctl_count[pid, comm] = count();
+}
+
+// 测量中断服务延迟
+kprobe:nvidia_isr {
+    @isr_start[tid] = nsecs;
+}
+
+kretprobe:nvidia_isr {
+    $start = @isr_start[tid];
+    if ($start > 0) {
+        $latency = nsecs - $start;
+        @isr_latency_ns = hist($latency);
+
+        // 告警：ISR 延迟超过 100μs
+        if ($latency > 100000) {
+            printf("WARNING: High ISR latency %llu ns (elapsed: %llu s)\n",
+                   $latency, elapsed / 1000000000);
+        }
+    }
+    delete(@isr_start[tid]);
+}
+
+interval:s:10 {
+    print(@ioctl_count);
+    print(@isr_latency_ns);
+    clear(@ioctl_count);
+    clear(@isr_latency_ns);
+}
+
+END {
+    clear(@isr_start);
+}
